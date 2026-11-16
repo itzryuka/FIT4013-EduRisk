@@ -1,0 +1,1153 @@
+{
+ "deployed": {
+  "admission": {
+   "flow": "A",
+   "model": "dt",
+   "params": {
+    "class_weight": "balanced",
+    "criterion": "gini",
+    "max_depth": 10,
+    "min_samples_leaf": 80
+   },
+   "cv_mean": 0.5310516581473846,
+   "cv_std": 0.017452665129395636,
+   "accuracy": 0.5581920903954802,
+   "f1_macro": 0.5313316011429219,
+   "roc_auc_ovr": 0.727334870037755
+  },
+  "sem1": {
+   "flow": "B",
+   "model": "dt",
+   "params": {
+    "class_weight": "balanced",
+    "criterion": "entropy",
+    "max_depth": 4,
+    "min_samples_leaf": 10
+   },
+   "cv_mean": 0.6521510373125252,
+   "cv_std": 0.010484807125254922,
+   "accuracy": 0.6700564971751413,
+   "f1_macro": 0.6341779348584223,
+   "roc_auc_ovr": 0.8298956891057351
+  },
+  "full": {
+   "flow": "B",
+   "model": "dt",
+   "params": {
+    "class_weight": "balanced",
+    "criterion": "gini",
+    "max_depth": 6,
+    "min_samples_leaf": 20
+   },
+   "cv_mean": 0.6853321928872489,
+   "cv_std": 0.009694800529195656,
+   "accuracy": 0.7084745762711865,
+   "f1_macro": 0.6734653363910635,
+   "roc_auc_ovr": 0.8551524290982114
+  }
+ },
+ "importance": {
+  "admission": [
+   {
+    "feature": "Tuition fees up to date",
+    "mean": 0.06536122265225974,
+    "std": 0.0027971596509910753
+   },
+   {
+    "feature": "Age at enrollment",
+    "mean": 0.042766817459477365,
+    "std": 0.006171426316220106
+   },
+   {
+    "feature": "Course",
+    "mean": 0.022239752803738064,
+    "std": 0.00859793163841624
+   },
+   {
+    "feature": "Scholarship holder",
+    "mean": 0.02210114778649673,
+    "std": 0.007968554544466027
+   },
+   {
+    "feature": "Admission grade",
+    "mean": 0.019516486820774295,
+    "std": 0.004970046433288724
+   },
+   {
+    "feature": "Gender",
+    "mean": 0.008517641172000795,
+    "std": 0.006468986883415388
+   },
+   {
+    "feature": "Previous qualification",
+    "mean": 0.007143925695070205,
+    "std": 0.002708881973355838
+   },
+   {
+    "feature": "Mother's qualification",
+    "mean": 0.004227194968149592,
+    "std": 0.004361497933952442
+   },
+   {
+    "feature": "Previous qualification (grade)",
+    "mean": 0.0021294536842100947,
+    "std": 0.0030557827954804506
+   },
+   {
+    "feature": "Marital status",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Application mode",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Nacionality",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Father's qualification",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Mother's occupation",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Father's occupation",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Daytime/evening attendance",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Displaced",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Educational special needs",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Debtor",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "International",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Application order",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Unemployment rate",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Inflation rate",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "GDP",
+    "mean": -0.00251150634486981,
+    "std": 0.005317486965409739
+   }
+  ],
+  "sem1": [
+   {
+    "feature": "Curricular units 1st sem (approved)",
+    "mean": 0.19536815781765507,
+    "std": 0.009379489984240565
+   },
+   {
+    "feature": "Tuition fees up to date",
+    "mean": 0.060894874591614426,
+    "std": 0.007977585229507422
+   },
+   {
+    "feature": "Curricular units 1st sem (enrolled)",
+    "mean": 0.0445354568299943,
+    "std": 0.005614082922628492
+   },
+   {
+    "feature": "Curricular units 1st sem (evaluations)",
+    "mean": 0.035641344484641235,
+    "std": 0.010447857790351019
+   },
+   {
+    "feature": "Curricular units 1st sem (grade)",
+    "mean": 0.01801811276867922,
+    "std": 0.007619867212352692
+   },
+   {
+    "feature": "Age at enrollment",
+    "mean": 0.015449207864664416,
+    "std": 0.008893040781679636
+   },
+   {
+    "feature": "Scholarship holder",
+    "mean": 0.009693888186245392,
+    "std": 0.005262143336602242
+   },
+   {
+    "feature": "GDP",
+    "mean": 0.002209173402810641,
+    "std": 0.002728229056948963
+   },
+   {
+    "feature": "Marital status",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Application mode",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Course",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Previous qualification",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Nacionality",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Mother's qualification",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Father's qualification",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Mother's occupation",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Father's occupation",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Daytime/evening attendance",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Displaced",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Educational special needs",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Debtor",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Gender",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "International",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Application order",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Previous qualification (grade)",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Admission grade",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Unemployment rate",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Inflation rate",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Curricular units 1st sem (credited)",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Curricular units 1st sem (without evaluations)",
+    "mean": 0.0,
+    "std": 0.0
+   }
+  ],
+  "full": [
+   {
+    "feature": "Curricular units 2nd sem (approved)",
+    "mean": 0.2655256634953253,
+    "std": 0.010058484244076056
+   },
+   {
+    "feature": "Curricular units 1st sem (approved)",
+    "mean": 0.0571739824782975,
+    "std": 0.002862934541373254
+   },
+   {
+    "feature": "Tuition fees up to date",
+    "mean": 0.053321144396987624,
+    "std": 0.006978576999287142
+   },
+   {
+    "feature": "Curricular units 2nd sem (enrolled)",
+    "mean": 0.04578263067514929,
+    "std": 0.007900840273175691
+   },
+   {
+    "feature": "Curricular units 2nd sem (evaluations)",
+    "mean": 0.030430736100545072,
+    "std": 0.006083401385659668
+   },
+   {
+    "feature": "Curricular units 1st sem (evaluations)",
+    "mean": 0.023420867751114627,
+    "std": 0.004474339365653588
+   },
+   {
+    "feature": "Curricular units 2nd sem (grade)",
+    "mean": 0.004838500809472207,
+    "std": 0.0038030508448190013
+   },
+   {
+    "feature": "Father's occupation",
+    "mean": 0.004439018539824882,
+    "std": 0.0024159492534974033
+   },
+   {
+    "feature": "Gender",
+    "mean": 0.0022657376179145705,
+    "std": 0.0013177254390514318
+   },
+   {
+    "feature": "Inflation rate",
+    "mean": 0.0015297998117411726,
+    "std": 0.0016921144378509976
+   },
+   {
+    "feature": "Age at enrollment",
+    "mean": 0.0010794370331787262,
+    "std": 0.004139374989216141
+   },
+   {
+    "feature": "Admission grade",
+    "mean": 0.00031392304149992223,
+    "std": 0.003911180896846064
+   },
+   {
+    "feature": "Marital status",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Application mode",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Course",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Previous qualification",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Nacionality",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Mother's qualification",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Father's qualification",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Mother's occupation",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Daytime/evening attendance",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Displaced",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Educational special needs",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Debtor",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Scholarship holder",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "International",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Application order",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Curricular units 1st sem (credited)",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Curricular units 1st sem (enrolled)",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Curricular units 1st sem (without evaluations)",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Curricular units 2nd sem (credited)",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Curricular units 2nd sem (without evaluations)",
+    "mean": 0.0,
+    "std": 0.0
+   },
+   {
+    "feature": "Unemployment rate",
+    "mean": -0.00012056222038793474,
+    "std": 0.002992784966962959
+   },
+   {
+    "feature": "Previous qualification (grade)",
+    "mean": -0.0004246245091613504,
+    "std": 0.003075645744808456
+   },
+   {
+    "feature": "Curricular units 1st sem (grade)",
+    "mean": -0.0009382021034910898,
+    "std": 0.0034903692963508715
+   },
+   {
+    "feature": "GDP",
+    "mean": -0.003196136191000745,
+    "std": 0.002121265555941122
+   }
+  ]
+ },
+ "errors": {
+  "admission": {
+   "n_test": 885,
+   "n_wrong": 391,
+   "confusion_pairs": [
+    {
+     "true": "Graduate",
+     "pred": "Enrolled",
+     "n": 123
+    },
+    {
+     "true": "Graduate",
+     "pred": "Dropout",
+     "n": 68
+    },
+    {
+     "true": "Dropout",
+     "pred": "Enrolled",
+     "n": 63
+    },
+    {
+     "true": "Dropout",
+     "pred": "Graduate",
+     "n": 53
+    },
+    {
+     "true": "Enrolled",
+     "pred": "Graduate",
+     "n": 49
+    },
+    {
+     "true": "Enrolled",
+     "pred": "Dropout",
+     "n": 35
+    }
+   ],
+   "by_course": [
+    {
+     "group": "9070",
+     "error_rate": 0.5384615384615384,
+     "n": 52
+    },
+    {
+     "group": "9130",
+     "error_rate": 0.5384615384615384,
+     "n": 26
+    },
+    {
+     "group": "9085",
+     "error_rate": 0.5333333333333333,
+     "n": 60
+    },
+    {
+     "group": "9991",
+     "error_rate": 0.5294117647058824,
+     "n": 51
+    },
+    {
+     "group": "9147",
+     "error_rate": 0.5256410256410257,
+     "n": 78
+    },
+    {
+     "group": "171",
+     "error_rate": 0.525,
+     "n": 40
+    },
+    {
+     "group": "9670",
+     "error_rate": 0.509090909090909,
+     "n": 55
+    },
+    {
+     "group": "9853",
+     "error_rate": 0.5,
+     "n": 34
+    },
+    {
+     "group": "9556",
+     "error_rate": 0.44999999999999996,
+     "n": 20
+    },
+    {
+     "group": "9254",
+     "error_rate": 0.4444444444444444,
+     "n": 54
+    },
+    {
+     "group": "8014",
+     "error_rate": 0.4,
+     "n": 50
+    },
+    {
+     "group": "9773",
+     "error_rate": 0.375,
+     "n": 64
+    },
+    {
+     "group": "9500",
+     "error_rate": 0.3647798742138365,
+     "n": 159
+    },
+    {
+     "group": "9238",
+     "error_rate": 0.359375,
+     "n": 64
+    },
+    {
+     "group": "9003",
+     "error_rate": 0.33333333333333337,
+     "n": 39
+    },
+    {
+     "group": "9119",
+     "error_rate": 0.32432432432432434,
+     "n": 37
+    },
+    {
+     "group": "33",
+     "error_rate": 0.0,
+     "n": 2
+    }
+   ],
+   "by_age": [
+    {
+     "group": "≤19",
+     "error_rate": 0.41554959785522794,
+     "n": 373
+    },
+    {
+     "group": "20–22",
+     "error_rate": 0.49327354260089684,
+     "n": 223
+    },
+    {
+     "group": "23–26",
+     "error_rate": 0.5,
+     "n": 90
+    },
+    {
+     "group": "27–35",
+     "error_rate": 0.4365079365079365,
+     "n": 126
+    },
+    {
+     "group": ">35",
+     "error_rate": 0.3561643835616438,
+     "n": 73
+    }
+   ],
+   "by_scholarship": [
+    {
+     "group": "0",
+     "error_rate": 0.4882352941176471,
+     "n": 680
+    },
+    {
+     "group": "1",
+     "error_rate": 0.2878048780487805,
+     "n": 205
+    }
+   ],
+   "by_debtor": [
+    {
+     "group": "0",
+     "error_rate": 0.46303501945525294,
+     "n": 771
+    },
+    {
+     "group": "1",
+     "error_rate": 0.29824561403508776,
+     "n": 114
+    }
+   ],
+   "by_tuition": [
+    {
+     "group": "0",
+     "error_rate": 0.14678899082568808,
+     "n": 109
+    },
+    {
+     "group": "1",
+     "error_rate": 0.4832474226804123,
+     "n": 776
+    }
+   ],
+   "confident_mistakes": 14
+  },
+  "sem1": {
+   "n_test": 885,
+   "n_wrong": 292,
+   "confusion_pairs": [
+    {
+     "true": "Graduate",
+     "pred": "Enrolled",
+     "n": 105
+    },
+    {
+     "true": "Dropout",
+     "pred": "Enrolled",
+     "n": 74
+    },
+    {
+     "true": "Enrolled",
+     "pred": "Dropout",
+     "n": 38
+    },
+    {
+     "true": "Enrolled",
+     "pred": "Graduate",
+     "n": 33
+    },
+    {
+     "true": "Graduate",
+     "pred": "Dropout",
+     "n": 22
+    },
+    {
+     "true": "Dropout",
+     "pred": "Graduate",
+     "n": 20
+    }
+   ],
+   "by_course": [
+    {
+     "group": "171",
+     "error_rate": 0.575,
+     "n": 40
+    },
+    {
+     "group": "33",
+     "error_rate": 0.5,
+     "n": 2
+    },
+    {
+     "group": "9085",
+     "error_rate": 0.43333333333333335,
+     "n": 60
+    },
+    {
+     "group": "9853",
+     "error_rate": 0.4117647058823529,
+     "n": 34
+    },
+    {
+     "group": "9991",
+     "error_rate": 0.4117647058823529,
+     "n": 51
+    },
+    {
+     "group": "9238",
+     "error_rate": 0.390625,
+     "n": 64
+    },
+    {
+     "group": "9670",
+     "error_rate": 0.38181818181818183,
+     "n": 55
+    },
+    {
+     "group": "9147",
+     "error_rate": 0.3589743589743589,
+     "n": 78
+    },
+    {
+     "group": "9119",
+     "error_rate": 0.3513513513513513,
+     "n": 37
+    },
+    {
+     "group": "9254",
+     "error_rate": 0.33333333333333337,
+     "n": 54
+    },
+    {
+     "group": "9070",
+     "error_rate": 0.32692307692307687,
+     "n": 52
+    },
+    {
+     "group": "9130",
+     "error_rate": 0.3076923076923077,
+     "n": 26
+    },
+    {
+     "group": "9556",
+     "error_rate": 0.30000000000000004,
+     "n": 20
+    },
+    {
+     "group": "9773",
+     "error_rate": 0.265625,
+     "n": 64
+    },
+    {
+     "group": "8014",
+     "error_rate": 0.24,
+     "n": 50
+    },
+    {
+     "group": "9003",
+     "error_rate": 0.23076923076923073,
+     "n": 39
+    },
+    {
+     "group": "9500",
+     "error_rate": 0.2075471698113207,
+     "n": 159
+    }
+   ],
+   "by_age": [
+    {
+     "group": "≤19",
+     "error_rate": 0.32707774798927614,
+     "n": 373
+    },
+    {
+     "group": "20–22",
+     "error_rate": 0.3677130044843049,
+     "n": 223
+    },
+    {
+     "group": "23–26",
+     "error_rate": 0.3666666666666667,
+     "n": 90
+    },
+    {
+     "group": "27–35",
+     "error_rate": 0.3015873015873016,
+     "n": 126
+    },
+    {
+     "group": ">35",
+     "error_rate": 0.23287671232876717,
+     "n": 73
+    }
+   ],
+   "by_scholarship": [
+    {
+     "group": "0",
+     "error_rate": 0.36764705882352944,
+     "n": 680
+    },
+    {
+     "group": "1",
+     "error_rate": 0.20487804878048776,
+     "n": 205
+    }
+   ],
+   "by_debtor": [
+    {
+     "group": "0",
+     "error_rate": 0.33592736705577175,
+     "n": 771
+    },
+    {
+     "group": "1",
+     "error_rate": 0.2894736842105263,
+     "n": 114
+    }
+   ],
+   "by_tuition": [
+    {
+     "group": "0",
+     "error_rate": 0.1651376146788991,
+     "n": 109
+    },
+    {
+     "group": "1",
+     "error_rate": 0.3530927835051546,
+     "n": 776
+    }
+   ],
+   "confident_mistakes": 10
+  },
+  "full": {
+   "n_test": 885,
+   "n_wrong": 258,
+   "confusion_pairs": [
+    {
+     "true": "Graduate",
+     "pred": "Enrolled",
+     "n": 85
+    },
+    {
+     "true": "Dropout",
+     "pred": "Enrolled",
+     "n": 78
+    },
+    {
+     "true": "Enrolled",
+     "pred": "Graduate",
+     "n": 30
+    },
+    {
+     "true": "Dropout",
+     "pred": "Graduate",
+     "n": 28
+    },
+    {
+     "true": "Enrolled",
+     "pred": "Dropout",
+     "n": 24
+    },
+    {
+     "true": "Graduate",
+     "pred": "Dropout",
+     "n": 13
+    }
+   ],
+   "by_course": [
+    {
+     "group": "171",
+     "error_rate": 0.525,
+     "n": 40
+    },
+    {
+     "group": "33",
+     "error_rate": 0.5,
+     "n": 2
+    },
+    {
+     "group": "9556",
+     "error_rate": 0.5,
+     "n": 20
+    },
+    {
+     "group": "9254",
+     "error_rate": 0.38888888888888884,
+     "n": 54
+    },
+    {
+     "group": "9238",
+     "error_rate": 0.328125,
+     "n": 64
+    },
+    {
+     "group": "9119",
+     "error_rate": 0.32432432432432434,
+     "n": 37
+    },
+    {
+     "group": "9147",
+     "error_rate": 0.3205128205128205,
+     "n": 78
+    },
+    {
+     "group": "9085",
+     "error_rate": 0.31666666666666665,
+     "n": 60
+    },
+    {
+     "group": "9070",
+     "error_rate": 0.3076923076923077,
+     "n": 52
+    },
+    {
+     "group": "9853",
+     "error_rate": 0.2941176470588235,
+     "n": 34
+    },
+    {
+     "group": "9670",
+     "error_rate": 0.2909090909090909,
+     "n": 55
+    },
+    {
+     "group": "9003",
+     "error_rate": 0.28205128205128205,
+     "n": 39
+    },
+    {
+     "group": "9773",
+     "error_rate": 0.25,
+     "n": 64
+    },
+    {
+     "group": "8014",
+     "error_rate": 0.24,
+     "n": 50
+    },
+    {
+     "group": "9991",
+     "error_rate": 0.23529411764705888,
+     "n": 51
+    },
+    {
+     "group": "9130",
+     "error_rate": 0.23076923076923073,
+     "n": 26
+    },
+    {
+     "group": "9500",
+     "error_rate": 0.1823899371069182,
+     "n": 159
+    }
+   ],
+   "by_age": [
+    {
+     "group": "≤19",
+     "error_rate": 0.2841823056300268,
+     "n": 373
+    },
+    {
+     "group": "20–22",
+     "error_rate": 0.2825112107623319,
+     "n": 223
+    },
+    {
+     "group": "23–26",
+     "error_rate": 0.34444444444444444,
+     "n": 90
+    },
+    {
+     "group": "27–35",
+     "error_rate": 0.33333333333333337,
+     "n": 126
+    },
+    {
+     "group": ">35",
+     "error_rate": 0.2191780821917808,
+     "n": 73
+    }
+   ],
+   "by_scholarship": [
+    {
+     "group": "0",
+     "error_rate": 0.32205882352941173,
+     "n": 680
+    },
+    {
+     "group": "1",
+     "error_rate": 0.19024390243902434,
+     "n": 205
+    }
+   ],
+   "by_debtor": [
+    {
+     "group": "0",
+     "error_rate": 0.2944228274967574,
+     "n": 771
+    },
+    {
+     "group": "1",
+     "error_rate": 0.27192982456140347,
+     "n": 114
+    }
+   ],
+   "by_tuition": [
+    {
+     "group": "0",
+     "error_rate": 0.1834862385321101,
+     "n": 109
+    },
+    {
+     "group": "1",
+     "error_rate": 0.30670103092783507,
+     "n": 776
+    }
+   ],
+   "confident_mistakes": 31
+  }
+ },
+ "setup": {
+  "random_state": 42,
+  "test_size": 0.2,
+  "cv_folds": 5,
+  "scoring": "f1_macro",
+  "n_train": 3539,
+  "n_test": 885,
+  "flows": {
+   "A": "Luồng A – cơ bản: One-Hot toàn bộ biến danh nghĩa, chuẩn hóa StandardScaler cho biến số/nhị phân, giữ nguyên các cột gốc.",
+   "B": "Luồng B – cải tiến: loại cột gần như hằng số, gộp giá trị hiếm (<1%) khi One-Hot, log tuổi nhập học, thêm tỉ lệ đạt, tỉ lệ thi đạt, cờ không đăng ký môn, xu hướng điểm và tổng số môn đạt."
+  },
+  "param_grids": {
+   "knn": {
+    "n_neighbors": [
+     3,
+     5,
+     7,
+     11,
+     15,
+     21,
+     31,
+     45
+    ],
+    "weights": [
+     "uniform",
+     "distance"
+    ],
+    "p": [
+     1,
+     2
+    ]
+   },
+   "dt": {
+    "max_depth": [
+     3,
+     4,
+     5,
+     6,
+     8,
+     10,
+     null
+    ],
+    "min_samples_leaf": [
+     1,
+     5,
+     10,
+     20,
+     40,
+     80
+    ],
+    "criterion": [
+     "gini",
+     "entropy"
+    ],
+    "class_weight": [
+     null,
+     "balanced"
+    ]
+   },
+   "nb": {
+    "var_smoothing": [
+     1e-11,
+     1e-10,
+     1e-09,
+     1e-08,
+     1e-07,
+     1e-06,
+     1e-05,
+     0.0001,
+     0.001,
+     0.01,
+     0.1,
+     1.0
+    ]
+   }
+  },
+  "model_names": {
+   "knn": "K-Nearest Neighbors",
+   "nb": "Gaussian Naive Bayes",
+   "dt": "Decision Tree"
+  },
+  "train_seconds": 166.6
+ }
+}

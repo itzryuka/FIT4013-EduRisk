@@ -1,0 +1,23 @@
+2026-11-13 23:41:47,978 Dữ liệu (4424, 37) | train 3539 | test 885 | random_state=42
+2026-11-13 23:42:05,993 admission/A/knn    default F1=0.505 | tuned CV=0.513±0.005 test F1=0.505 {'n_neighbors': 5, 'p': 2, 'weights': 'uniform'}
+2026-11-13 23:42:07,324 admission/A/nb     default F1=0.217 | tuned CV=0.527±0.019 test F1=0.511 {'var_smoothing': 0.01}
+2026-11-13 23:42:24,214 admission/A/dt     default F1=0.503 | tuned CV=0.531±0.017 test F1=0.531 {'class_weight': 'balanced', 'criterion': 'gini', 'max_depth': 10, 'min_samples_leaf': 80}
+2026-11-13 23:42:28,769 admission/B/knn    default F1=0.510 | tuned CV=0.528±0.009 test F1=0.510 {'n_neighbors': 5, 'p': 2, 'weights': 'uniform'}
+2026-11-13 23:42:29,815 admission/B/nb     default F1=0.242 | tuned CV=0.531±0.015 test F1=0.521 {'var_smoothing': 0.01}
+2026-11-13 23:42:43,657 admission/B/dt     default F1=0.483 | tuned CV=0.531±0.017 test F1=0.531 {'class_weight': 'balanced', 'criterion': 'gini', 'max_depth': 10, 'min_samples_leaf': 80}
+2026-11-13 23:42:52,950 sem1/A/knn         default F1=0.602 | tuned CV=0.584±0.016 test F1=0.580 {'n_neighbors': 7, 'p': 1, 'weights': 'uniform'}
+2026-11-13 23:42:54,628 sem1/A/nb          default F1=0.217 | tuned CV=0.567±0.024 test F1=0.545 {'var_smoothing': 0.1}
+2026-11-13 23:43:12,238 sem1/A/dt          default F1=0.591 | tuned CV=0.644±0.016 test F1=0.641 {'class_weight': 'balanced', 'criterion': 'entropy', 'max_depth': 8, 'min_samples_leaf': 20}
+2026-11-13 23:43:17,327 sem1/B/knn         default F1=0.636 | tuned CV=0.627±0.011 test F1=0.618 {'n_neighbors': 7, 'p': 1, 'weights': 'distance'}
+2026-11-13 23:43:18,588 sem1/B/nb          default F1=0.262 | tuned CV=0.630±0.020 test F1=0.611 {'var_smoothing': 0.1}
+2026-11-13 23:43:34,030 sem1/B/dt          default F1=0.589 | tuned CV=0.652±0.010 test F1=0.634 {'class_weight': 'balanced', 'criterion': 'entropy', 'max_depth': 4, 'min_samples_leaf': 10}
+2026-11-13 23:43:43,651 full/A/knn         default F1=0.618 | tuned CV=0.620±0.021 test F1=0.619 {'n_neighbors': 11, 'p': 1, 'weights': 'uniform'}
+2026-11-13 23:43:45,897 full/A/nb          default F1=0.217 | tuned CV=0.622±0.020 test F1=0.614 {'var_smoothing': 0.1}
+2026-11-13 23:44:04,827 full/A/dt          default F1=0.608 | tuned CV=0.676±0.019 test F1=0.649 {'class_weight': 'balanced', 'criterion': 'entropy', 'max_depth': 6, 'min_samples_leaf': 40}
+2026-11-13 23:44:10,927 full/B/knn         default F1=0.661 | tuned CV=0.679±0.018 test F1=0.678 {'n_neighbors': 7, 'p': 1, 'weights': 'distance'}
+2026-11-13 23:44:12,327 full/B/nb          default F1=0.320 | tuned CV=0.675±0.010 test F1=0.665 {'var_smoothing': 0.1}
+2026-11-13 23:44:30,323 full/B/dt          default F1=0.626 | tuned CV=0.685±0.010 test F1=0.673 {'class_weight': 'balanced', 'criterion': 'gini', 'max_depth': 6, 'min_samples_leaf': 20}
+2026-11-13 23:44:30,331 Triển khai [admission]: A/dt CV=0.531 test F1=0.531
+2026-11-13 23:44:31,742 Triển khai [sem1]: B/dt CV=0.652 test F1=0.634
+2026-11-13 23:44:32,982 Triển khai [full]: B/dt CV=0.685 test F1=0.673
+2026-11-13 23:44:48,518 Hoàn tất sau 180.7 giây
