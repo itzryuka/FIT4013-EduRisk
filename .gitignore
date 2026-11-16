@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+.venv/
+data/*.csv
+*.zip
+results/train_stdout.txt
+.claude/
+docs/~$*
+~$*
+# LaTeX build
+report/*.aux
+report/*.log
+report/*.out
+report/*.toc
+report/*.lof
+report/*.lot
+report/*.synctex.gz
+report/*.fls
+report/*.fdb_latexmk
+report/*.xdv
+report/main.pdf
