@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}Kết quả mô hình{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Kết quả mô hình</h1>
+    <p>So sánh 3 thuật toán, 2 cách xử lý dữ liệu (Luồng A, B) và các bộ siêu tham số. Tiêu chí chính là Macro-F1 vì dữ liệu mất cân bằng.</p></div>
+  <div class="seg" id="scenSeg">
+    {% for s in scenarios %}<button data-s="{{ s.key }}" class="{{ 'active' if s.key == 'full' }}">{{ s.name }}</button>{% endfor %}
+  </div>
+</div>
+
+<div class="page-tabs">
+  <button data-tab="summary"><i class="bi bi-clipboard-check"></i>Tóm tắt</button>
+  <button data-tab="charts"><i class="bi bi-bar-chart"></i>So sánh chi tiết</button>
+  <button data-tab="table"><i class="bi bi-table"></i>Bảng kết quả</button>
+  <button data-tab="hp"><i class="bi bi-sliders"></i>Siêu tham số</button>
+</div>
+
+<section data-pane="summary">
+  <div class="grid g-2 mb">
+    <div class="card"><div class="card-head"><h2>Kết luận chính</h2></div>
+      <ul class="takeaways">
+        <li><i class="bi bi-check-circle-fill"></i><span><b>Luồng B giúp K-NN và Naive Bayes</b> tăng 0,04–0,07 Macro-F1. Decision Tree gần như không đổi vì cây tự tìm ngưỡng.</span></li>
+        <li><i class="bi bi-check-circle-fill"></i><span><b>Dự đoán càng muộn càng chính xác:</b> khoảng 0,53 lúc nhập học, 0,63 sau học kỳ 1 và 0,68 sau năm thứ nhất.</span></li>
+        <li><i class="bi bi-check-circle-fill"></i><span><b>Lớp "Còn đang học" khó nhất</b> vì nằm giữa hai lớp kia. Decision Tree có <code>class_weight='balanced'</code> nhận ra lớp này tốt nhất.</span></li>
+        <li><i class="bi bi-check-circle-fill"></i><span><b>Mô hình triển khai được chọn theo CV</b> trên tập train, không chọn theo tập test.</span></li>
+      </ul>
+    </div>
+    <div class="card"><div class="card-head"><h2>Thiết lập thí nghiệm</h2><span class="badge">random_state = {{ setup.random_state }}</span></div>
+      <ul class="list">
+        <li><span class="muted">Chia dữ liệu</span><b>{{ setup.n_train }} train / {{ setup.n_test }} test (stratify)</b></li>
+        <li><span class="muted">Chọn siêu tham số</span><b>GridSearchCV {{ setup.cv_folds }}-fold, chỉ trên train</b></li>
+        <li><span class="muted">Tiêu chí</span><b>Macro-F1</b></li>
+        <li><span class="muted">Mốc so sánh</span><b>Dummy + tham số mặc định</b></li>
+        <li><span class="muted">Luồng A</span><span style="text-align:right">{{ setup.flows.A.split(':', 1)[1] }}</span></li>
+        <li><span class="muted">Luồng B</span><span style="text-align:right">{{ setup.flows.B.split(':', 1)[1] }}</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="grid g-2">
+    <div class="card"><div class="card-head"><div><h2>Luồng A vs Luồng B</h2><div class="card-sub">Macro-F1 trên tập test, mô hình đã tinh chỉnh. Đường đứt nét là Dummy.</div></div></div>
+      <div class="chart"><canvas id="flowChart"></canvas></div></div>
+    <div class="card"><div class="card-head"><div><h2>Đánh đổi độ sớm và độ chính xác</h2><div class="card-sub">Macro-F1 tốt nhất của từng thuật toán qua 3 thời điểm</div></div></div>
+      <div class="chart"><canvas id="scenChart"></canvas></div></div>
+  </div>
+</section>
+
+<section data-pane="charts">
+  <div class="grid g-2">
+    <div class="card"><div class="card-head"><div><h2>Mặc định vs tinh chỉnh</h2><div class="card-sub">Ảnh hưởng của GridSearchCV với từng thuật toán và luồng</div></div></div>
+      <div class="chart"><canvas id="tuneChart"></canvas></div></div>
+    <div class="card"><div class="card-head"><div><h2>Recall từng lớp</h2><div class="card-sub">Recall lớp "Bỏ học" quan trọng nhất trong thực tế</div></div></div>
+      <div class="chart"><canvas id="recallChart"></canvas></div></div>
+  </div>
+</section>
+
+<section data-pane="table">
+<div class="card mb">
+  <div class="card-head"><div><h2>Bảng kết quả</h2><div class="card-sub">Nhấn vào tiêu đề cột để sắp xếp · nhấn vào dòng để xem ma trận nhầm lẫn · dòng tô màu là mô hình triển khai</div></div>
+    <div class="row"><div class="seg" id="cfgSeg"><button data-c="all" class="active">Tất cả</button><button data-c="tuned">Tinh chỉnh</button><button data-c="default">Mặc định</button></div>
+      <a class="btn ghost sm" href="#" id="dlCsv"><i class="bi bi-download"></i>CSV</a></div></div>
+  <div class="table-wrap"><table id="resTable"></table></div>
+</div>
+
+<div class="card">
+  <div class="card-head"><div><h2>Ma trận nhầm lẫn</h2><div class="card-sub" id="cmTitle"></div></div></div>
+  <div class="grid g-2"><div id="cmBox"></div><div id="cmPerClass"></div></div>
+</div>
+</section>
+
+<section data-pane="hp">
+  <div class="card"><div class="card-head"><div><h2>Khảo sát siêu tham số</h2><div class="card-sub">CV Macro-F1 (mean ± std) trên tập train</div></div>
+      <div class="row"><div class="seg" id="hpFlow"><button data-v="A">Luồng A</button><button data-v="B" class="active">Luồng B</button></div>
+        <div class="seg" id="hpModel"><button data-v="knn" class="active">K-NN</button><button data-v="dt">Decision Tree</button><button data-v="nb">Naive Bayes</button></div></div></div>
+    <div class="chart lg"><canvas id="hpChart"></canvas></div>
+    <div class="callout small mt" id="hpNote"></div></div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+let DATA, scen = "full", cfg = "all", sortKey = "f1_macro", sortDir = -1, hpFlow = "B", hpModel = "knn", selected = null;
+const MODELS = ["knn", "nb", "dt"];
+const CFG_VI = { tuned: "Tinh chỉnh", default: "Mặc định", baseline: "Baseline" };
+const find = (s, f, m, c) => DATA.rows.find(r => r.scenario === s && r.flow === f && r.model === m && r.config === c);
+const isDeployed = r => { const d = DATA.deployed[r.scenario]; return r.config === "tuned" && d.flow === r.flow && d.model === r.model; };
+
+function paramStr(p) { return Object.entries(p || {}).map(([k, v]) => `${k}=${v === null ? "None" : (typeof v === "number" && v < 0.001 ? v.toExponential(0) : v)}`).join(", "); }
+
+function renderCharts() {
+  const dummy = DATA.rows.find(r => r.scenario === scen && r.model === "dummy");
+  makeChart("flowChart", {
+    type: "bar",
+    data: { labels: MODELS.map(m => MODEL_SHORT[m]), datasets: [
+      ...["A", "B"].map((f, i) => ({ label: "Luồng " + f, data: MODELS.map(m => find(scen, f, m, "tuned").f1_macro),
+        backgroundColor: i ? css("--primary") : css("--primary") + "66", borderRadius: 6 })),
+      { type: "line", label: "Dummy", data: MODELS.map(() => dummy.f1_macro), borderColor: css("--muted"), borderDash: [5, 4], pointRadius: 0 }
+    ] },
+    options: { scales: { y: { min: 0, max: 0.8 }, x: { grid: { display: false } } },
+      plugins: { tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${fmt.num(c.raw)}` } } } }
+  });
+  const lbl = [], d = [], t = [];
+  ["A", "B"].forEach(f => MODELS.forEach(m => { lbl.push(`${MODEL_SHORT[m]} · ${f}`); d.push(find(scen, f, m, "default").f1_macro); t.push(find(scen, f, m, "tuned").f1_macro); }));
+  makeChart("tuneChart", {
+    type: "bar",
+    data: { labels: lbl, datasets: [{ label: "Mặc định", data: d, backgroundColor: css("--border"), borderRadius: 6 },
+                                   { label: "Tinh chỉnh", data: t, backgroundColor: css("--primary"), borderRadius: 6 }] },
+    options: { scales: { y: { min: 0, max: 0.8 }, x: { grid: { display: false } } } }
+  });
+  const scens = ["admission", "sem1", "full"];
+  makeChart("scenChart", {
+    type: "line",
+    data: { labels: scens.map(s => SCEN_VI[s]), datasets: MODELS.map((m, i) => ({
+      label: MODEL_SHORT[m], tension: .3, borderWidth: 2.5, pointRadius: 5,
+      borderColor: [css("--primary"), css("--enrolled"), css("--graduate")][i], backgroundColor: [css("--primary"), css("--enrolled"), css("--graduate")][i],
+      data: scens.map(s => Math.max(find(s, "A", m, "tuned").f1_macro, find(s, "B", m, "tuned").f1_macro)) })) },
+    options: { scales: { y: { min: 0.4, max: 0.75 } } }
+  });
+  const tuned = ["A", "B"].flatMap(f => MODELS.map(m => find(scen, f, m, "tuned")));
+  makeChart("recallChart", {
+    type: "bar",
+    data: { labels: tuned.map(r => `${MODEL_SHORT[r.model]} · ${r.flow}`),
+      datasets: CLS.map(c => ({ label: CLS_VI[c], data: tuned.map(r => r.per_class[c].recall), backgroundColor: clsColor(c), borderRadius: 4 })) },
+    options: { scales: { y: { min: 0, max: 1, ticks: { callback: v => fmt.pct(v, 0) } }, x: { grid: { display: false } } },
+      plugins: { tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${fmt.pct(c.raw)}` } } } }
+  });
+}
+
+const COLS = [
+  ["model", "Mô hình"], ["flow", "Luồng"], ["config", "Cấu hình"], ["cv_mean", "CV F1", 1], ["f1_macro", "Test Macro-F1", 1],
+  ["accuracy", "Accuracy", 1], ["precision_macro", "Precision", 1], ["recall_macro", "Recall", 1], ["rec_D", "Recall Bỏ học", 1],
+  ["rec_E", "Recall Còn học", 1], ["roc_auc_ovr", "ROC-AUC", 1], ["params", "Tham số"]
+];
+function cell(r, k) {
+  if (k === "rec_D") return r.per_class.Dropout.recall;
+  if (k === "rec_E") return r.per_class.Enrolled.recall;
+  return r[k];
+}
+function renderTable() {
+  let rows = DATA.rows.filter(r => r.scenario === scen && (cfg === "all" || r.config === cfg || r.model === "dummy"));
+  rows.sort((a, b) => { const x = cell(a, sortKey), y = cell(b, sortKey); return (x === y ? 0 : (x == null ? 1 : y == null ? -1 : x > y ? 1 : -1)) * sortDir; });
+  const best = Math.max(...rows.map(r => r.f1_macro));
+  const t = document.getElementById("resTable");
+  t.innerHTML = `<thead><tr>${COLS.map(([k, l, n]) => `<th class="sortable ${n ? "num" : ""}" data-k="${k}">${l}${sortKey === k ? (sortDir > 0 ? " ▲" : " ▼") : ""}</th>`).join("")}</tr></thead><tbody>` +
+    rows.map(r => `<tr class="${isDeployed(r) ? "highlight" : ""}" data-i="${DATA.rows.indexOf(r)}" style="cursor:pointer">
+      <td><b>${MODEL_SHORT[r.model]}</b>${isDeployed(r) ? ' <span class="badge primary">triển khai</span>' : ""}</td><td>${r.flow}</td>
+      <td><span class="badge ${r.config === "tuned" ? "primary" : ""}">${CFG_VI[r.config]}</span></td>
+      <td class="num">${r.cv_mean == null ? "—" : fmt.num(r.cv_mean) + '<span class="muted small"> ±' + fmt.num(r.cv_std, 3) + "</span>"}</td>
+      <td class="num ${r.f1_macro === best ? "best" : ""}">${fmt.num(r.f1_macro)}</td><td class="num">${fmt.num(r.accuracy)}</td>
+      <td class="num">${fmt.num(r.precision_macro)}</td><td class="num">${fmt.num(r.recall_macro)}</td>
+      <td class="num">${fmt.num(r.per_class.Dropout.recall)}</td><td class="num">${fmt.num(r.per_class.Enrolled.recall)}</td>
+      <td class="num">${fmt.num(r.roc_auc_ovr)}</td><td class="small muted" style="white-space:normal;min-width:220px">${esc(paramStr(r.params))}</td></tr>`).join("") + "</tbody>";
+  t.querySelectorAll("th").forEach(th => th.addEventListener("click", () => {
+    const k = th.dataset.k; if (k === "params") return;
+    sortDir = sortKey === k ? -sortDir : -1; sortKey = k; renderTable();
+  }));
+  t.querySelectorAll("tbody tr").forEach(tr => tr.addEventListener("click", () => { selected = DATA.rows[+tr.dataset.i]; renderCM(); }));
+}
+
+function renderCM() {
+  const r = selected && selected.scenario === scen ? selected : find(scen, DATA.deployed[scen].flow, DATA.deployed[scen].model, "tuned");
+  document.getElementById("cmTitle").textContent = `${SCEN_VI[scen]} · ${MODEL_SHORT[r.model]} · Luồng ${r.flow} · ${r.config} · Macro-F1 ${fmt.num(r.f1_macro)}`;
+  document.getElementById("cmBox").innerHTML = confusionHTML(r.confusion_matrix);
+  document.getElementById("cmPerClass").innerHTML = `<div class="table-wrap"><table><thead><tr><th>Lớp</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th><th class="num">Support</th></tr></thead><tbody>` +
+    CLS.map(c => { const p = r.per_class[c]; return `<tr><td><span class="badge ${c}">${CLS_VI[c]}</span></td><td class="num">${fmt.num(p.precision)}</td><td class="num">${fmt.num(p.recall)}</td><td class="num">${fmt.num(p.f1)}</td><td class="num">${p.support}</td></tr>`; }).join("") + "</tbody></table></div>";
+}
+
+async function renderHP() {
+  const rows = await api(`/api/hparams?scenario=${scen}&flow=${hpFlow}&model=${hpModel}`);
+  const palette = [css("--primary"), css("--enrolled"), css("--graduate"), css("--dropout"), "#7048e8", "#0ca678"];
+  let cfgC, note;
+  if (hpModel === "knn") {
+    const ks = [...new Set(rows.map(r => r.n_neighbors))].sort((a, b) => a - b);
+    const combos = [["uniform", 1], ["uniform", 2], ["distance", 1], ["distance", 2]];
+    cfgC = { type: "line", data: { labels: ks, datasets: combos.map(([w, p], i) => ({
+      label: `${w}, ${p === 1 ? "Manhattan" : "Euclid"}`, borderColor: palette[i], backgroundColor: palette[i], tension: .25, pointRadius: 3,
+      data: ks.map(k => rows.find(r => r.n_neighbors === k && r.weights === w && r.p === p).mean_f1_macro) })) },
+      options: { scales: { x: { title: { display: true, text: "k (số láng giềng)" } } } } };
+    note = "k nhỏ dễ overfit (nhạy nhiễu), k lớn làm biên quyết định mượt hơn nhưng thiên về lớp đa số.";
+  } else if (hpModel === "dt") {
+    const depths = [3, 4, 5, 6, 8, 10, null];
+    const leaves = [...new Set(rows.map(r => r.min_samples_leaf))].sort((a, b) => a - b);
+    cfgC = { type: "line", data: { labels: depths.map(d => d ?? "∞"), datasets: leaves.map((l, i) => ({
+      label: `min_samples_leaf=${l}`, borderColor: palette[i], backgroundColor: palette[i], tension: .25, pointRadius: 3,
+      data: depths.map(dp => Math.max(...rows.filter(r => r.max_depth === dp && r.min_samples_leaf === l).map(r => r.mean_f1_macro))) })) },
+      options: { scales: { x: { title: { display: true, text: "max_depth" } } } } };
+    note = "Mỗi điểm là giá trị tốt nhất theo criterion và class_weight. Cây sâu và lá nhỏ thì overfit; class_weight='balanced' giúp lớp 'Còn đang học'.";
+  } else {
+    rows.sort((a, b) => a.var_smoothing - b.var_smoothing);
+    cfgC = { type: "line", data: { labels: rows.map(r => r.var_smoothing.toExponential(0)), datasets: [{
+      label: "GaussianNB", borderColor: palette[0], backgroundColor: palette[0], tension: .25, pointRadius: 4, data: rows.map(r => r.mean_f1_macro) }] },
+      options: { scales: { x: { title: { display: true, text: "var_smoothing" } } } } };
+    note = "Cột One-Hot có phương sai rất nhỏ nên var_smoothing mặc định (1e-9) khiến xác suất cực đoan và F1 rất thấp; làm mượt lớn hơn cải thiện rõ rệt.";
+  }
+  cfgC.options.plugins = { tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${fmt.num(c.raw)}` } } };
+  makeChart("hpChart", cfgC);
+  const best = rows.reduce((a, b) => a.mean_f1_macro > b.mean_f1_macro ? a : b);
+  document.getElementById("hpNote").innerHTML = note + `<br><b>Tốt nhất:</b> ${esc(paramStr(Object.fromEntries(Object.entries(best).filter(([k]) => !["mean_f1_macro", "std_f1_macro", "rank"].includes(k)))))} → ${fmt.num(best.mean_f1_macro)} ± ${fmt.num(best.std_f1_macro)}`;
+}
+
+function renderAll() { renderCharts(); renderTable(); renderCM(); renderHP(); }
+function bindSeg(id, cb) {
+  document.querySelectorAll(`#${id} button`).forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll(`#${id} button`).forEach(x => x.classList.toggle("active", x === b)); cb(b);
+  }));
+}
+document.addEventListener("DOMContentLoaded", async () => {
+  DATA = await api("/api/experiments");
+  bindSeg("scenSeg", b => { scen = b.dataset.s; selected = null; renderAll(); });
+  bindSeg("cfgSeg", b => { cfg = b.dataset.c; renderTable(); });
+  bindSeg("hpFlow", b => { hpFlow = b.dataset.v; renderHP(); });
+  bindSeg("hpModel", b => { hpModel = b.dataset.v; renderHP(); });
+  document.getElementById("dlCsv").addEventListener("click", e => {
+    e.preventDefault();
+    const head = ["scenario", "flow", "model", "config", "cv_mean", "cv_std", "f1_macro", "accuracy", "precision_macro", "recall_macro", "roc_auc_ovr", "recall_Dropout", "recall_Enrolled", "recall_Graduate", "params"];
+    const lines = [head.join(",")].concat(DATA.rows.map(r => [r.scenario, r.flow, r.model, r.config, r.cv_mean, r.cv_std, r.f1_macro, r.accuracy, r.precision_macro, r.recall_macro, r.roc_auc_ovr,
+      ...CLS.map(c => r.per_class[c].recall), '"' + paramStr(r.params) + '"'].join(",")));
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + lines.join("\n")], { type: "text/csv" }));
+    a.download = "ket_qua_thi_nghiem.csv"; a.click();
+  });
+  renderAll();
+});
+</script>
+{% endblock %}

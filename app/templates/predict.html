@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block title %}Dự đoán một sinh viên{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Dự đoán một sinh viên</h1>
+    <p>Làm theo 2 bước bên dưới. Kết quả hiện ở khung bên phải và tự cập nhật khi bạn sửa thông tin.</p></div>
+</div>
+
+<div class="card mb">
+  <div class="card-head"><div><h2><span class="step-no">1</span>Chọn thời điểm dự đoán</h2>
+    <div class="card-sub">Dự đoán càng sớm thì càng ít thông tin, nên độ chính xác thấp hơn.</div></div></div>
+  <div class="scen-tabs">
+    {% for s in scenarios %}
+    <button class="scen-tab {{ 'active' if s.key == 'sem1' }}" data-s="{{ s.key }}">
+      <b><i class="bi bi-clock-history"></i> {{ s.name }}</b>
+      <span>Độ chính xác (Macro-F1) {{ "%.2f"|format(s.f1) }} · {{ s.n_features }} thông tin</span>
+    </button>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="grid g-main-side">
+  <form id="form" class="stack" autocomplete="off" novalidate>
+    <div class="card" style="padding:16px 20px">
+      <div class="row between">
+        <div><h2 style="margin:0"><span class="step-no">2</span>Nhập thông tin sinh viên</h2>
+          <div class="card-sub">Chưa có dữ liệu? Lấy một sinh viên thật trong tập kiểm tra để thử.</div></div>
+        <div class="row">
+          <select id="sampleCls" style="width:auto">
+            <option value="">Ngẫu nhiên</option>
+            {% for c in CLASSES %}<option value="{{ c }}">SV {{ CLASS_VI[c]|lower }}</option>{% endfor %}
+          </select>
+          <button type="button" class="btn ghost" id="btnSample"><i class="bi bi-shuffle"></i>Lấy sinh viên mẫu</button>
+          <button type="button" class="btn ghost" id="btnReset" title="Đưa về giá trị mặc định"><i class="bi bi-arrow-counterclockwise"></i></button>
+        </div>
+      </div>
+    </div>
+    {% for g in groups %}
+    <details class="form-group" data-group="{{ g.key }}" {{ 'open' if loop.index <= 2 }}>
+      <summary><i class="bi {{ g.icon }} lead"></i>{{ g.title }}
+        <span class="badge off-badge" style="display:none">Không dùng ở kịch bản này</span>
+        <i class="bi bi-chevron-down chev"></i></summary>
+      <div class="fields">
+        {% for f in g.fields %}
+        <div class="field" data-col="{{ f.name }}" data-scen="{{ col_scen[f.name]|join(' ') }}">
+          <label for="f-{{ loop.index }}-{{ g.key }}">{{ f.label }}</label>
+          {% if f.type == 'nominal' %}
+            <select id="f-{{ loop.index }}-{{ g.key }}" name="{{ f.name }}" data-default="{{ f.default }}">
+              {% for o in f.options %}<option value="{{ o.value }}" {{ 'selected' if o.value == f.default }}>{{ o.label }}</option>{% endfor %}
+            </select>
+          {% elif f.type == 'binary' %}
+            <div class="toggle">
+              {% for o in f.options %}
+              <input type="radio" id="r-{{ g.key }}-{{ loop.index }}-{{ f.name|replace(' ', '_')|replace('/', '_')|replace("'", '') }}" name="{{ f.name }}" value="{{ o.value }}" data-default="{{ f.default }}" {{ 'checked' if o.value == f.default }}>
+              <label for="r-{{ g.key }}-{{ loop.index }}-{{ f.name|replace(' ', '_')|replace('/', '_')|replace("'", '') }}">{{ o.label }}</label>
+              {% endfor %}
+            </div>
+          {% else %}
+            <input type="number" id="f-{{ loop.index }}-{{ g.key }}" name="{{ f.name }}" {{ 'min=0' if f.min >= 0 }} step="{{ f.step }}"
+                   value="{{ f.default|round(2) if f.type == 'float' else f.default|int }}" data-default="{{ f.default|round(2) if f.type == 'float' else f.default|int }}">
+            <span class="hint">Dữ liệu: {{ f.min|round(2) }} – {{ f.max|round(2) }}</span>
+          {% endif %}
+          <span class="err"></span>
+        </div>
+        {% endfor %}
+      </div>
+    </details>
+    {% endfor %}
+    <div class="row" style="position:sticky;bottom:16px;z-index:5">
+      <button type="submit" class="btn lg" id="btnPredict" style="box-shadow:var(--shadow)"><i class="bi bi-lightning-charge"></i>Dự đoán</button>
+      <label class="small muted row" style="gap:6px;background:var(--surface);padding:6px 10px;border-radius:8px;border:1px solid var(--border)">
+        <input type="checkbox" id="live" checked> Tự động cập nhật khi thay đổi</label>
+    </div>
+  </form>
+
+  <aside class="result-panel">
+    <div class="card" id="result">
+      <div class="empty"><i class="bi bi-clipboard-data"></i><b>Chưa có kết quả</b><br>
+        <span class="small">Nhấn <b>Dự đoán</b> hoặc <b>Điền mẫu từ tập test</b> để bắt đầu.</span></div>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+let scenario = "sem1", lastSample = null, hasResult = false, timer = null, reqId = 0;
+
+function setScenario(s) {
+  scenario = s;
+  document.querySelectorAll(".scen-tab").forEach(t => t.classList.toggle("active", t.dataset.s === s));
+  document.querySelectorAll(".form-group").forEach(g => {
+    const fields = [...g.querySelectorAll(".field")];
+    const used = fields.some(f => f.dataset.scen.split(" ").includes(s));
+    g.classList.toggle("disabled", !used);
+    g.querySelector(".off-badge").style.display = used ? "none" : "";
+    if (!used) g.open = false; else if (["sem1", "sem2"].includes(g.dataset.group)) g.open = true;
+  });
+  if (hasResult) predict();
+}
+
+function collect() {
+  const fd = new FormData(document.getElementById("form")), out = {};
+  for (const [k, v] of fd.entries()) out[k] = v;
+  return out;
+}
+function fill(features) {
+  for (const [k, v] of Object.entries(features)) {
+    const radios = document.querySelectorAll(`input[type=radio][name="${CSS.escape(k)}"]`);
+    if (radios.length) { radios.forEach(r => r.checked = String(r.value) === String(v)); continue; }
+    const el = document.querySelector(`[name="${CSS.escape(k)}"]`);
+    if (!el) continue;
+    if (el.tagName === "SELECT" && ![...el.options].some(o => o.value === String(v))) {
+      const o = new Option(`Mã ${v}`, v); el.add(o);
+    }
+    el.value = typeof v === "number" && !Number.isInteger(v) ? +v.toFixed(2) : v;
+  }
+}
+function resetForm() {
+  document.querySelectorAll("[data-default]").forEach(el => {
+    if (el.type === "radio") el.checked = el.value === el.dataset.default; else el.value = el.dataset.default;
+  });
+  lastSample = null;
+}
+function clearErrors() { document.querySelectorAll(".field.invalid").forEach(f => f.classList.remove("invalid")); }
+
+function gauge(p, key) {
+  const L = Math.PI * 80, color = clsColor({ high: "Dropout", medium: "Enrolled", low: "Graduate" }[key]);
+  return `<svg class="gauge" viewBox="0 0 200 118">
+    <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="${css("--border")}" stroke-width="16" stroke-linecap="round"/>
+    <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="${color}" stroke-width="16" stroke-linecap="round"
+      stroke-dasharray="${L}" stroke-dashoffset="${L}" style="transition:stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1)" data-to="${L * (1 - p)}"/>
+    <text x="100" y="88" text-anchor="middle" font-size="30" font-weight="750" fill="${css("--text")}">${(p * 100).toFixed(0)}%</text>
+    <text x="100" y="110" text-anchor="middle" font-size="11" fill="${css("--muted")}">xác suất bỏ học</text></svg>`;
+}
+
+function indicatorHTML(it) {
+  if (it.binary) {
+    return `<div class="ind"><div class="row between"><span class="small"><b>${esc(it.label)}</b></span><span class="badge ${it.closer}">${esc(it.value_text)}</span></div>
+      <div class="small muted">Tỉ lệ "Có": nhóm bỏ học ${fmt.pct(it.dropout_mean, 0)} · nhóm tốt nghiệp ${fmt.pct(it.graduate_mean, 0)}</div></div>`;
+  }
+  const vals = [it.value, it.dropout_mean, it.graduate_mean];
+  let lo = Math.min(...vals), hi = Math.max(...vals); const pad = (hi - lo) * 0.15 || 1; lo -= pad; hi += pad;
+  const pos = v => ((v - lo) / (hi - lo) * 100).toFixed(1) + "%";
+  return `<div class="ind"><div class="row between"><span class="small"><b>${esc(it.label)}</b></span>
+      <span class="small">Giá trị: <b>${esc(it.value_text)}</b> · gần nhóm <span class="badge ${it.closer}">${CLS_VI[it.closer]}</span></span></div>
+    <div class="ind-scale"><span class="m d" style="left:${pos(it.dropout_mean)}" title="TB bỏ học"></span>
+      <span class="m g" style="left:${pos(it.graduate_mean)}" title="TB tốt nghiệp"></span><span class="v" style="left:${pos(it.value)}"></span></div>
+    <div class="row between small muted"><span><span class="dot Dropout"></span> TB bỏ học ${fmt.num(it.dropout_mean, 2)}</span><span>TB tốt nghiệp ${fmt.num(it.graduate_mean, 2)} <span class="dot Graduate"></span></span></div></div>`;
+}
+
+function render(r) {
+  const box = document.getElementById("result");
+  const sampleInfo = lastSample ? `<div class="callout ${lastSample.true === r.prediction ? "ok" : "warn"} mb small">
+      Mẫu thật #${lastSample.row_id} từ tập test · Nhãn thực tế: <span class="badge ${lastSample.true}">${lastSample.true_vi}</span>
+      ${lastSample.true === r.prediction ? " · <b>Dự đoán đúng</b>" : " · <b>Dự đoán sai</b>"}</div>` : "";
+  const nb = r.neighbors;
+  box.innerHTML = `<div class="fade-in">
+    ${sampleInfo}
+    <div class="verdict ${r.risk.key}">${gauge(r.p_dropout, r.risk.key)}
+      <div class="lvl">${r.risk.label}</div>
+      <div class="small">Dự đoán: <b>${r.prediction_vi}</b> · ${esc(r.model.name)}</div></div>
+    <p class="small mt" style="margin-bottom:6px"><i class="bi bi-lightbulb"></i> <b>Khuyến nghị:</b> ${r.risk.advice}</p>
+    <div class="mt">${r.probabilities.map(p => `<div class="prob-row"><span><span class="dot ${p.cls}"></span> ${p.label}</span>
+      <div class="bar"><span style="width:0;background:${clsColor(p.cls)}" data-w="${p.p * 100}%"></span></div><b class="tnum" style="text-align:right">${fmt.pct(p.p, 0)}</b></div>`).join("")}</div>
+    <div class="tabs mt">
+      <button class="active" data-t="ind">Yếu tố chính</button>
+      ${r.rules ? '<button data-t="rules">Luật quyết định</button>' : ""}
+      <button data-t="nb">SV tương tự</button></div>
+    <div class="tab-pane active" data-p="ind">${r.indicators.map(indicatorHTML).join("") || '<p class="muted small">Không có.</p>'}
+      <p class="small muted mt">Các đặc trưng có permutation importance cao nhất của mô hình. Chấm tròn là giá trị của sinh viên, vạch là trung bình từng nhóm.</p></div>
+    ${r.rules ? `<div class="tab-pane" data-p="rules"><ol class="rules">${r.rules.rules.map(x => `<li>${esc(x)}</li>`).join("")}</ol>
+      <div class="callout small mt">Nút lá có <b>${r.rules.leaf_samples}</b> sinh viên train (có trọng số lớp): ${CLS.map(c => `${CLS_VI[c]} ${fmt.pct(r.rules.leaf_dist[c], 0)}`).join(" · ")}</div></div>` : ""}
+    <div class="tab-pane" data-p="nb">
+      <div class="row mb">${CLS.map(c => `<span class="badge ${c}">${CLS_VI[c]}: ${nb.counts[c]}/7</span>`).join("")}</div>
+      <div class="table-wrap"><table><thead><tr><th>Kết quả</th><th>Ngành</th><th class="num">Tuổi</th><th class="num">HK1</th></tr></thead><tbody>
+      ${nb.items.map(n => `<tr><td><span class="badge ${n.outcome}">${n.outcome_vi}</span></td><td class="small" style="white-space:normal">${esc(n.course)}</td>
+        <td class="num">${n.age}</td><td class="num">${n.s1_approved}/${n.s1_enrolled} · ${fmt.num(n.s1_grade, 1)}</td></tr>`).join("")}</tbody></table></div>
+      <p class="small muted mt">7 sinh viên trong tập train gần nhất trong không gian đặc trưng đã chuẩn hóa của mô hình.</p></div>
+  </div>`;
+  requestAnimationFrame(() => {
+    box.querySelectorAll("[data-w]").forEach(el => el.style.width = el.dataset.w);
+    box.querySelectorAll("[data-to]").forEach(el => el.style.strokeDashoffset = el.dataset.to);
+  });
+  box.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
+    box.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("active", x === b));
+    box.querySelectorAll(".tab-pane").forEach(p => p.classList.toggle("active", p.dataset.p === b.dataset.t));
+  }));
+}
+
+async function predict() {
+  const id = ++reqId, btn = document.getElementById("btnPredict");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang dự đoán…';
+  clearErrors();
+  try {
+    const r = await api("/api/predict", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scenario, features: collect() }) });
+    if (id !== reqId) return;
+    hasResult = true; render(r);
+  } catch (e) {
+    if (e.data && e.data.errors) {
+      for (const [col, msg] of Object.entries(e.data.errors)) {
+        const f = document.querySelector(`.field[data-col="${CSS.escape(col)}"]`);
+        if (f) { f.classList.add("invalid"); f.querySelector(".err").textContent = msg; f.closest("details").open = true; }
+      }
+      toast("Vui lòng kiểm tra lại các trường được đánh dấu");
+    } else toast(e.message);
+  } finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-lightning-charge"></i>Dự đoán'; }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".scen-tab").forEach(t => t.addEventListener("click", () => setScenario(t.dataset.s)));
+  document.getElementById("form").addEventListener("submit", e => { e.preventDefault(); predict(); });
+  document.getElementById("form").addEventListener("input", () => {
+    lastSample = null;
+    if (hasResult && document.getElementById("live").checked) { clearTimeout(timer); timer = setTimeout(predict, 350); }
+  });
+  document.getElementById("btnSample").addEventListener("click", async () => {
+    const cls = document.getElementById("sampleCls").value;
+    const s = await api(`/api/sample?scenario=${scenario}${cls ? "&cls=" + cls : ""}`);
+    fill(s.features); lastSample = s; predict();
+    toast(`Đã điền mẫu #${s.row_id} (nhãn thực tế: ${s.true_vi})`);
+  });
+  document.getElementById("btnReset").addEventListener("click", () => { resetForm(); if (hasResult) predict(); });
+  setScenario(scenario);
+});
+</script>
+{% endblock %}

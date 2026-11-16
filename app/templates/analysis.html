@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Phân tích lỗi{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Phân tích lỗi</h1>
+    <p>Mô hình đang dùng dựa vào thông tin nào, hay sai ở nhóm sinh viên nào, và những ca sai nào đáng lo nhất (trên tập kiểm tra).</p></div>
+  <div class="seg" id="scenSeg">
+    {% for s in scenarios %}<button data-s="{{ s.key }}" class="{{ 'active' if s.key == 'full' }}">{{ s.name }}</button>{% endfor %}
+  </div>
+</div>
+
+<div class="grid g-4 mb" id="kpis"></div>
+
+<div class="page-tabs">
+  <button data-tab="why"><i class="bi bi-lightbulb"></i>Mô hình dựa vào đâu</button>
+  <button data-tab="where"><i class="bi bi-pie-chart"></i>Sai ở nhóm nào</button>
+  <button data-tab="cases"><i class="bi bi-exclamation-triangle"></i>Ca sai đáng chú ý</button>
+</div>
+
+<section data-pane="why">
+<div class="grid g-2">
+  <div class="card"><div class="card-head"><div><h2>Permutation importance</h2>
+    <div class="card-sub">Macro-F1 giảm bao nhiêu khi xáo trộn ngẫu nhiên một đặc trưng (8 lần lặp, trên tập test)</div></div></div>
+    <div class="chart lg"><canvas id="impChart"></canvas></div></div>
+  <div class="card"><div class="card-head"><div><h2>Các cặp nhầm lẫn</h2><div class="card-sub">Thực tế → Dự đoán, xếp theo số ca</div></div></div>
+    <div id="pairs"></div>
+    <div class="callout warn mt" id="pairNote"></div></div>
+</div>
+</section>
+
+<section data-pane="where">
+<div class="grid g-2">
+  <div class="card"><div class="card-head"><div><h2>Tỉ lệ lỗi theo ngành</h2><div class="card-sub">Chỉ hiển thị ngành có ít nhất 15 mẫu test</div></div></div>
+    <div class="chart lg"><canvas id="courseChart"></canvas></div></div>
+  <div class="card"><div class="card-head"><div><h2>Tỉ lệ lỗi theo nhóm sinh viên</h2><div class="card-sub">Mô hình kém hơn ở nhóm nào?</div></div></div>
+    <div class="chart lg"><canvas id="groupChart"></canvas></div></div>
+</div>
+</section>
+
+<section data-pane="cases">
+<div class="card">
+  <div class="card-head"><div><h2>Các ca dự đoán sai tự tin nhất</h2>
+    <div class="card-sub">Mô hình rất chắc chắn nhưng vẫn sai. Đây thường là ngoại lệ thật sự hoặc dấu hiệu thiếu thông tin.</div></div></div>
+  <div class="table-wrap" style="max-height:520px"><table id="mistakes"></table></div>
+</div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+let scen = "full";
+const PAIR_NOTE = {
+  "Enrolled": "Lớp <b>Còn đang học</b> nằm \"giữa\" hai lớp kia: nhiều sinh viên có kết quả năm 1 giống người tốt nghiệp nhưng học chậm hơn, hoặc giống người bỏ học nhưng chưa bỏ. Nhãn được ghi ở cuối thời gian đào tạo chuẩn, nên đặc trưng năm 1 khó phân biệt.",
+};
+async function load() {
+  const d = await api("/api/analysis?scenario=" + scen);
+  const e = d.errors, dep = d.deployed;
+  document.getElementById("kpis").innerHTML = `
+    <div class="card stat"><div class="stat-icon"><i class="bi bi-cpu"></i></div><div><div class="stat-value" style="font-size:1.1rem">${MODEL_SHORT[dep.model]} · ${dep.flow}</div><div class="stat-label">Mô hình triển khai</div></div></div>
+    <div class="card stat"><div class="stat-icon"><i class="bi bi-bullseye"></i></div><div><div class="stat-value">${fmt.num(dep.f1_macro)}</div><div class="stat-label">Macro-F1 test</div></div></div>
+    <div class="card stat"><div class="stat-icon" style="background:var(--dropout-soft);color:var(--dropout)"><i class="bi bi-x-octagon"></i></div><div><div class="stat-value">${e.n_wrong}/${e.n_test}</div><div class="stat-label">Ca dự đoán sai (${fmt.pct(e.n_wrong / e.n_test)})</div></div></div>
+    <div class="card stat"><div class="stat-icon" style="background:var(--enrolled-soft);color:var(--enrolled)"><i class="bi bi-exclamation-triangle"></i></div><div><div class="stat-value">${e.confident_mistakes}</div><div class="stat-label">Sai với độ tự tin ≥ 80%</div></div></div>`;
+
+  const imp = d.importance.slice(0, 15);
+  makeChart("impChart", {
+    type: "bar",
+    data: { labels: imp.map(x => x.label), datasets: [{ data: imp.map(x => x.mean), backgroundColor: css("--primary"), borderRadius: 4 }] },
+    options: { indexAxis: "y", plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` −${fmt.num(c.raw)} F1 (±${fmt.num(imp[c.dataIndex].std)})` } } },
+      scales: { y: { grid: { display: false }, ticks: { font: { size: 11 } } } } }
+  });
+
+  const total = e.n_wrong;
+  document.getElementById("pairs").innerHTML = e.confusion_pairs.map(p => `
+    <div class="row" style="margin:10px 0"><span class="badge ${p.true}" style="min-width:120px">${CLS_VI[p.true]}</span><i class="bi bi-arrow-right muted"></i>
+      <span class="badge ${p.pred}" style="min-width:120px">${CLS_VI[p.pred]}</span>
+      <div class="bar" style="flex:1"><span style="width:${p.n / total * 100}%;background:${clsColor(p.true)}"></span></div><b class="tnum" style="width:70px;text-align:right">${p.n} <span class="muted small">(${fmt.pct(p.n / total, 0)})</span></b></div>`).join("");
+  const dropMissed = e.confusion_pairs.filter(p => p.true === "Dropout").reduce((s, p) => s + p.n, 0);
+  document.getElementById("pairNote").innerHTML = PAIR_NOTE.Enrolled +
+    `<br><br><b>Tác động thực tế:</b> ${dropMissed} sinh viên thực sự bỏ học bị dự đoán sai (bỏ sót cảnh báo). Đây là loại lỗi tốn kém nhất với nhà trường.`;
+
+  const courses = e.by_course.filter(r => r.n >= 15).slice(0, 12);
+  makeChart("courseChart", {
+    type: "bar",
+    data: { labels: courses.map(r => r.label), datasets: [{ data: courses.map(r => r.error_rate), backgroundColor: css("--dropout") + "cc", borderRadius: 4 }] },
+    options: { indexAxis: "y", plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` Lỗi ${fmt.pct(c.raw)} (n=${courses[c.dataIndex].n})` } } },
+      scales: { x: { ticks: { callback: v => fmt.pct(v, 0) } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } } }
+  });
+  const yn = g => g === "1" ? "Có" : "Không";
+  const groups = [
+    ...e.by_age.map(r => ({ l: "Tuổi " + r.group, ...r, c: css("--primary") })),
+    ...e.by_scholarship.map(r => ({ l: "Học bổng: " + yn(r.group), ...r, c: css("--graduate") })),
+    ...e.by_debtor.map(r => ({ l: "Đang nợ: " + yn(r.group), ...r, c: css("--enrolled") })),
+    ...e.by_tuition.map(r => ({ l: "Học phí đúng hạn: " + yn(r.group), ...r, c: css("--dropout") })),
+  ];
+  makeChart("groupChart", {
+    type: "bar",
+    data: { labels: groups.map(g => g.l), datasets: [{ data: groups.map(g => g.error_rate), backgroundColor: groups.map(g => g.c + "cc"), borderRadius: 4 }] },
+    options: { indexAxis: "y", plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` Lỗi ${fmt.pct(c.raw)} (n=${groups[c.dataIndex].n})` } } },
+      scales: { x: { ticks: { callback: v => fmt.pct(v, 0) } }, y: { grid: { display: false } } } }
+  });
+
+  const t = document.getElementById("mistakes");
+  t.innerHTML = `<thead><tr><th>#</th><th>Thực tế</th><th>Dự đoán</th><th class="num">Độ tự tin</th><th>Ngành</th><th class="num">Tuổi</th>
+    <th class="num">Điểm XT</th><th>Học bổng</th><th>Học phí</th><th class="num">HK1 đạt</th><th class="num">HK1 điểm</th><th class="num">HK2 đạt</th><th class="num">HK2 điểm</th></tr></thead><tbody>` +
+    d.mistakes.slice(0, 25).map(r => `<tr><td class="muted">${r.row_id}</td><td><span class="badge ${r.true}">${CLS_VI[r.true]}</span></td>
+      <td><span class="badge ${r.pred}">${CLS_VI[r.pred]}</span></td><td class="num"><b>${fmt.pct(r.confidence, 0)}</b></td><td>${esc(r.Course)}</td>
+      <td class="num">${r["Age at enrollment"]}</td><td class="num">${r["Admission grade"]}</td><td>${r["Scholarship holder"] ? "Có" : "—"}</td>
+      <td>${r["Tuition fees up to date"] ? "Đúng hạn" : '<span class="badge Dropout">Trễ</span>'}</td>
+      <td class="num">${r["Curricular units 1st sem (approved)"]}</td><td class="num">${fmt.num(r["Curricular units 1st sem (grade)"], 1)}</td>
+      <td class="num">${r["Curricular units 2nd sem (approved)"]}</td><td class="num">${fmt.num(r["Curricular units 2nd sem (grade)"], 1)}</td></tr>`).join("") + "</tbody>";
+}
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("#scenSeg button").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll("#scenSeg button").forEach(x => x.classList.toggle("active", x === b)); scen = b.dataset.s; load();
+  }));
+  load();
+});
+</script>
+{% endblock %}

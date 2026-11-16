@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Dự đoán theo danh sách{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Dự đoán theo danh sách</h1>
+    <p>Tải lên danh sách sinh viên cùng định dạng với dữ liệu gốc (phân tách <code>;</code> hoặc <code>,</code>). Hệ thống trả về danh sách xếp theo mức nguy cơ.
+       Nếu tệp có cột <code>Target</code>, hệ thống sẽ đối chiếu với nhãn thực tế.</p></div>
+  <a class="btn ghost" href="/api/batch/template"><i class="bi bi-file-earmark-arrow-down"></i>Tải tệp mẫu</a>
+</div>
+
+<div class="grid g-main-side mb">
+  <div class="card">
+    <label class="dropzone" id="drop" for="file">
+      <i class="bi bi-cloud-arrow-up"></i>
+      <h3 style="margin-top:8px">Kéo thả tệp CSV vào đây</h3>
+      <div class="muted small" id="fileName">hoặc nhấn để chọn tệp (tối đa 5 MB)</div>
+      <input type="file" id="file" accept=".csv,text/csv" hidden>
+    </label>
+  </div>
+  <div class="card">
+    <h3>Thời điểm dự đoán</h3>
+    <div class="stack" style="gap:8px;margin:10px 0 16px">
+      {% for s in scenarios %}
+      <label class="row small" style="gap:8px;cursor:pointer"><input type="radio" name="scen" value="{{ s.key }}" {{ 'checked' if s.key == 'sem1' }}>
+        <span><b>{{ s.name }}</b> <span class="muted">· {{ s.n_features }} cột · F1 {{ "%.3f"|format(s.f1) }}</span></span></label>
+      {% endfor %}
+    </div>
+    <button class="btn" id="btnRun" style="width:100%;justify-content:center" disabled><i class="bi bi-play-fill"></i>Chạy dự đoán</button>
+  </div>
+</div>
+
+<div id="out" style="display:none">
+  <div class="grid g-4 mb" id="summary"></div>
+  <div class="card">
+    <div class="card-head"><div><h2>Kết quả</h2><div class="card-sub" id="outSub"></div></div>
+      <div class="row">
+        <div class="seg" id="riskSeg"><button data-r="all" class="active">Tất cả</button><button data-r="high">Nguy cơ cao</button><button data-r="medium">Theo dõi</button><button data-r="low">Thấp</button></div>
+        <button class="btn sm" id="btnDl"><i class="bi bi-download"></i>Tải CSV</button></div></div>
+    <div class="table-wrap" style="max-height:560px"><table id="tbl"></table></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+let file = null, rows = [], filter = "all";
+const RISK_VI = { high: "Nguy cơ cao", medium: "Cần theo dõi", low: "Nguy cơ thấp" };
+
+function setFile(f) {
+  file = f; document.getElementById("fileName").textContent = f ? `${f.name} · ${(f.size / 1024).toFixed(1)} KB` : "";
+  document.getElementById("btnRun").disabled = !f;
+}
+function renderTable() {
+  const list = rows.filter(r => !r.error && (filter === "all" || r.risk === filter)).sort((a, b) => b.p_dropout - a.p_dropout);
+  const hasTrue = rows.some(r => r.true);
+  document.getElementById("tbl").innerHTML = `<thead><tr><th>Dòng</th><th>Mức nguy cơ</th><th class="num">P(Bỏ học)</th><th>Dự đoán</th>
+    ${hasTrue ? "<th>Thực tế</th>" : ""}<th>Ngành</th><th class="num">P(Còn học)</th><th class="num">P(Tốt nghiệp)</th></tr></thead><tbody>` +
+    list.map(r => `<tr><td class="muted">${r.row}</td><td><span class="badge ${r.risk}">${RISK_VI[r.risk]}</span></td>
+      <td class="num"><div class="row" style="justify-content:flex-end;gap:8px"><div class="bar" style="width:80px"><span style="width:${r.p_dropout * 100}%;background:var(--dropout)"></span></div><b>${fmt.pct(r.p_dropout, 0)}</b></div></td>
+      <td><span class="badge ${r.pred}">${r.pred_vi}</span></td>
+      ${hasTrue ? `<td><span class="badge ${r.true}">${CLS_VI[r.true] || esc(r.true)}</span> ${r.true === r.pred ? '<i class="bi bi-check-lg" style="color:var(--graduate)"></i>' : '<i class="bi bi-x-lg" style="color:var(--dropout)"></i>'}</td>` : ""}
+      <td class="small">${esc(r.course)}</td><td class="num">${fmt.pct(r.p_enrolled, 0)}</td><td class="num">${fmt.pct(r.p_graduate, 0)}</td></tr>`).join("") + "</tbody>";
+}
+async function run() {
+  const btn = document.getElementById("btnRun");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang xử lý…';
+  const fd = new FormData(); fd.append("file", file); fd.append("scenario", document.querySelector("input[name=scen]:checked").value);
+  try {
+    const d = await api("/api/batch", { method: "POST", body: fd });
+    rows = d.rows;
+    const ok = rows.filter(r => !r.error), cnt = k => ok.filter(r => r.risk === k).length;
+    const withTrue = ok.filter(r => r.true), acc = withTrue.length ? withTrue.filter(r => r.true === r.pred).length / withTrue.length : null;
+    document.getElementById("summary").innerHTML = `
+      <div class="card stat"><div class="stat-icon"><i class="bi bi-people"></i></div><div><div class="stat-value">${ok.length}</div><div class="stat-label">Sinh viên hợp lệ${rows.length - ok.length ? ` (${rows.length - ok.length} lỗi)` : ""}</div></div></div>
+      <div class="card stat"><div class="stat-icon" style="background:var(--dropout-soft);color:var(--dropout)"><i class="bi bi-exclamation-octagon"></i></div><div><div class="stat-value">${cnt("high")}</div><div class="stat-label">Nguy cơ cao</div></div></div>
+      <div class="card stat"><div class="stat-icon" style="background:var(--enrolled-soft);color:var(--enrolled)"><i class="bi bi-eye"></i></div><div><div class="stat-value">${cnt("medium")}</div><div class="stat-label">Cần theo dõi</div></div></div>
+      <div class="card stat"><div class="stat-icon" style="background:var(--graduate-soft);color:var(--graduate)"><i class="bi bi-${acc == null ? "check2" : "bullseye"}"></i></div><div><div class="stat-value">${acc == null ? cnt("low") : fmt.pct(acc)}</div><div class="stat-label">${acc == null ? "Nguy cơ thấp" : "Độ chính xác so với Target"}</div></div></div>`;
+    document.getElementById("outSub").textContent = `Kịch bản: ${SCEN_VI[d.scenario]} · sắp xếp theo xác suất bỏ học giảm dần`;
+    document.getElementById("out").style.display = ""; renderTable();
+    document.getElementById("out").scrollIntoView({ behavior: "smooth" });
+  } catch (e) { toast(e.message, 5000); }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-play-fill"></i>Chạy dự đoán'; }
+}
+document.addEventListener("DOMContentLoaded", () => {
+  const drop = document.getElementById("drop");
+  document.getElementById("file").addEventListener("change", e => setFile(e.target.files[0]));
+  ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("drag"); }));
+  ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("drag"); }));
+  drop.addEventListener("drop", e => setFile(e.dataTransfer.files[0]));
+  document.getElementById("btnRun").addEventListener("click", run);
+  document.querySelectorAll("#riskSeg button").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll("#riskSeg button").forEach(x => x.classList.toggle("active", x === b)); filter = b.dataset.r; renderTable();
+  }));
+  document.getElementById("btnDl").addEventListener("click", () => {
+    const head = ["row", "risk", "prediction", "p_dropout", "p_enrolled", "p_graduate", "true", "course", "error"];
+    const lines = [head.join(",")].concat(rows.map(r => [r.row, r.risk ? RISK_VI[r.risk] : "", r.pred_vi || "", r.p_dropout ?? "", r.p_enrolled ?? "", r.p_graduate ?? "", r.true || "", `"${r.course || ""}"`, r.error || ""].join(",")));
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + lines.join("\n")], { type: "text/csv" }));
+    a.download = "ket_qua_du_doan.csv"; a.click();
+  });
+});
+</script>
+{% endblock %}

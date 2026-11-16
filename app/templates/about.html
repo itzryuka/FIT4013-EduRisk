@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Phương pháp{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Phương pháp, giả định & hạn chế</h1>
+    <p>Tóm tắt cách xây dựng hệ thống để phục vụ báo cáo và vấn đáp.</p></div>
+</div>
+
+<div class="grid g-2 mb">
+  <div class="card">
+    <h2>Bài toán</h2>
+    <p>Phân loại 3 lớp: <span class="badge Dropout">Bỏ học</span> <span class="badge Enrolled">Còn đang học</span> <span class="badge Graduate">Tốt nghiệp</span>.
+       Nhãn là tình trạng của sinh viên khi kết thúc thời gian đào tạo chuẩn.</p>
+    <p class="muted small">Ứng dụng: nhà trường xác định sớm sinh viên có nguy cơ bỏ học để tư vấn, hỗ trợ tài chính hoặc học thuật.</p>
+    <h3 class="mt">Nguồn dữ liệu</h3>
+    <ul class="list">
+      <li><span>Bộ dữ liệu</span><a href="https://archive.ics.uci.edu/dataset/697/predict+students+dropout+and+academic+success" target="_blank" rel="noopener">UCI ML Repository #697</a></li>
+      <li><span>Tác giả</span><span>Realinho, Vieira Martins, Machado, Baptista</span></li>
+      <li><span>Bối cảnh</span><span>Một trường bách khoa ở Bồ Đào Nha</span></li>
+      <li><span>Giấy phép</span><span>CC BY 4.0 (kiểm tra lại trên trang UCI)</span></li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>Chống rò rỉ dữ liệu & tái lập</h2>
+    <ul class="list">
+      <li><span>Chia train/test</span><b>{{ setup.n_train }}/{{ setup.n_test }}, stratified</b></li>
+      <li><span>random_state</span><b>{{ setup.random_state }}</b></li>
+      <li><span>Cross-validation</span><b>StratifiedKFold {{ setup.cv_folds }}-fold</b></li>
+      <li><span>Tiêu chí chọn mô hình</span><b>CV Macro-F1 (không nhìn test)</b></li>
+      <li><span>Scaler/Encoder</span><b>Trong Pipeline, fit trên fold train</b></li>
+      <li><span>Thời gian huấn luyện</span><b>{{ setup.train_seconds }} giây</b></li>
+    </ul>
+    <div class="callout mt small">Chạy lại toàn bộ: <code>python -m src.train</code>, sau đó <code>python -m app.app</code>.</div>
+  </div>
+</div>
+
+<div class="card mb">
+  <h2>Thuật toán & lưới siêu tham số</h2>
+  <div class="grid g-3 mt">
+    {% for k, g in setup.param_grids.items() %}
+    <div class="scen-card"><b>{{ setup.model_names[k] }}</b>
+      {% for p, vals in g.items() %}<div class="small"><code>{{ p }}</code>: <span class="muted">{{ vals|map('string')|join(', ') if vals|length < 9 else (vals[0]|string) ~ ' … ' ~ (vals[-1]|string) ~ ' (' ~ vals|length ~ ' giá trị)' }}</span></div>{% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  <div class="grid g-3 mt small">
+    <div><b>K-NN</b>: dựa trên khoảng cách nên bắt buộc chuẩn hóa. Nhạy với số chiều cao do One-Hot, Luồng B gộp nhóm hiếm để giảm chiều.</div>
+    <div><b>Naive Bayes</b>: giả định các đặc trưng độc lập, nhưng điểm HK1 và HK2 tương quan mạnh nên giả định bị vi phạm. Gaussian không phù hợp với cột 0/1, cần var_smoothing lớn.</div>
+    <div><b>Decision Tree</b>: không cần chuẩn hóa, diễn giải được bằng luật. Dễ overfit nếu không giới hạn độ sâu. <code>class_weight</code> giúp lớp thiểu số.</div>
+  </div>
+</div>
+
+<div class="grid g-2">
+  <div class="card"><h2>Giả định</h2>
+    <ul class="small" style="padding-left:18px;margin:0">
+      <li>Thông tin tài chính (nợ, học phí, học bổng) có từ đầu khóa, nên được dùng ở kịch bản "Lúc nhập học".</li>
+      <li>Các chỉ số kinh tế vĩ mô ứng với năm nhập học của sinh viên.</li>
+      <li>Phân phối sinh viên tương lai giống dữ liệu huấn luyện.</li>
+    </ul></div>
+  <div class="card"><h2>Hạn chế</h2>
+    <ul class="small" style="padding-left:18px;margin:0">
+      <li>Dữ liệu của một trường ở Bồ Đào Nha, khó tổng quát hóa sang bối cảnh Việt Nam.</li>
+      <li>Lớp "Còn đang học" khó phân biệt, recall thấp.</li>
+      <li>Nhãn mã hóa ngành/nghề nghiệp có nhiều giá trị hiếm.</li>
+      <li>Chỉ dùng 3 thuật toán cơ bản của học phần; chưa hiệu chỉnh xác suất (calibration).</li>
+      <li>Mô hình dự đoán tương quan, không phải quan hệ nhân quả. Không nên dùng để ra quyết định bất lợi cho sinh viên.</li>
+    </ul></div>
+</div>
+{% endblock %}

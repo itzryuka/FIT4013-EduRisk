@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block title %}Thử nghiệm mô hình{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Thử nghiệm mô hình</h1>
+    <p>Tự chọn thuật toán, luồng xử lý và siêu tham số, huấn luyện trực tiếp trên tập train ({{ setup.n_train }} mẫu) và đánh giá trên tập test ({{ setup.n_test }} mẫu).
+       So sánh nhiều lần chạy để thấy ảnh hưởng của từng lựa chọn.</p></div>
+</div>
+
+<div class="card mb">
+  <div class="card-head">
+    <div><h2><i class="bi bi-shield-check"></i> Kiểm thử các mô hình đã lưu</h2>
+      <div class="card-sub">Nạp lại 3 tệp <code>models/*.joblib</code>, dự đoán trên tập test và đối chiếu với kết quả lúc huấn luyện, để xác nhận khả năng tái lập.</div></div>
+    <button class="btn" id="btnSaved"><i class="bi bi-play-circle"></i>Chạy kiểm thử</button>
+  </div>
+  <div id="savedOut"></div>
+</div>
+
+<div class="grid g-config mb">
+  <div class="card">
+    <h2>Cấu hình</h2>
+    <div class="stack" style="gap:14px;margin-top:12px">
+      <div class="field"><label>Thời điểm dự đoán</label>
+        <div class="seg" id="segScen">{% for s in scenarios %}<button data-v="{{ s.key }}" class="{{ 'active' if s.key == 'full' }}">{{ s.name }}</button>{% endfor %}</div></div>
+      <div class="field"><label>Luồng tiền xử lý</label>
+        <div class="seg" id="segFlow"><button data-v="A">Luồng A – cơ bản</button><button data-v="B" class="active">Luồng B – cải tiến</button></div></div>
+      <div class="field"><label>Thuật toán</label>
+        <div class="seg" id="segModel"><button data-v="knn">K-NN</button><button data-v="nb">Naive Bayes</button><button data-v="dt" class="active">Decision Tree</button></div></div>
+
+      <div class="params" data-m="knn">
+        <div class="field"><label>Số láng giềng k: <b id="kVal">5</b></label>
+          <input type="range" id="p_n_neighbors" min="1" max="101" step="2" value="5"></div>
+        <div class="grid g-2" style="gap:10px;margin-top:10px">
+          <div class="field"><label>Trọng số</label><select id="p_weights"><option value="uniform">uniform</option><option value="distance">distance</option></select></div>
+          <div class="field"><label>Khoảng cách</label><select id="p_p"><option value="2">Euclid (p=2)</option><option value="1">Manhattan (p=1)</option></select></div>
+        </div>
+      </div>
+      <div class="params" data-m="nb">
+        <div class="field"><label>var_smoothing = 10^<b id="vsVal">-9</b></label>
+          <input type="range" id="p_vs" min="-12" max="0" step="1" value="-9">
+          <span class="hint">Phần phương sai cộng thêm để tránh chia cho phương sai ≈ 0 (cột One-Hot)</span></div>
+      </div>
+      <div class="params" data-m="dt">
+        <div class="field"><label>Độ sâu tối đa: <b id="dVal">không giới hạn</b></label>
+          <input type="range" id="p_max_depth" min="1" max="21" step="1" value="21"><span class="hint">Kéo hết sang phải = không giới hạn</span></div>
+        <div class="field" style="margin-top:10px"><label>Số mẫu tối thiểu ở lá: <b id="lVal">1</b></label>
+          <input type="range" id="p_min_samples_leaf" min="1" max="150" step="1" value="1"></div>
+        <div class="grid g-2" style="gap:10px;margin-top:10px">
+          <div class="field"><label>Tiêu chí</label><select id="p_criterion"><option>gini</option><option>entropy</option><option>log_loss</option></select></div>
+          <div class="field"><label>Trọng số lớp</label><select id="p_class_weight"><option value="">Không</option><option value="balanced">balanced</option></select></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <button class="btn ghost sm" id="preDefault"><i class="bi bi-arrow-counterclockwise"></i>Mặc định sklearn</button>
+        <button class="btn ghost sm" id="preBest"><i class="bi bi-stars"></i>Tốt nhất (GridSearch)</button>
+      </div>
+      <label class="row small" style="gap:8px;flex-wrap:nowrap"><input type="checkbox" id="useCv"> Chạy thêm 5-fold CV trên tập train (chậm hơn)</label>
+      <button class="btn lg" id="btnRun" style="justify-content:center"><i class="bi bi-cpu"></i>Huấn luyện & đánh giá</button>
+    </div>
+  </div>
+
+  <div class="card" id="result">
+    <div class="empty"><i class="bi bi-sliders"></i><b>Chưa có lần chạy nào</b><br>
+      <span class="small">Chọn cấu hình bên trái rồi nhấn <b>Huấn luyện & đánh giá</b>.</span></div>
+  </div>
+</div>
+
+<div class="card" id="historyCard" style="display:none">
+  <div class="card-head"><div><h2>Lịch sử các lần chạy</h2><div class="card-sub">So sánh Macro-F1 trên train và test. Khoảng cách lớn giữa hai cột là dấu hiệu overfit.</div></div>
+    <button class="btn ghost sm" id="btnClear"><i class="bi bi-trash"></i>Xóa lịch sử</button></div>
+  <div class="chart sm mb"><canvas id="histChart"></canvas></div>
+  <div class="table-wrap"><table id="histTable"></table></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+let scen = "full", flow = "B", model = "dt", EXP = null, history = [];
+const $ = id => document.getElementById(id);
+const DEFAULTS = { knn: { n_neighbors: 5, weights: "uniform", p: 2 }, nb: { var_smoothing: 1e-9 },
+                   dt: { max_depth: null, min_samples_leaf: 1, criterion: "gini", class_weight: null } };
+try { history = JSON.parse(sessionStorage.getItem("pg_history") || "[]"); } catch (e) { history = []; }
+
+function paramStr(p) { return Object.entries(p).map(([k, v]) => `${k}=${v === null ? "None" : (typeof v === "number" && v !== 0 && Math.abs(v) < 0.001 ? v.toExponential(0) : v)}`).join(", "); }
+function syncLabels() {
+  $("kVal").textContent = $("p_n_neighbors").value;
+  $("vsVal").textContent = $("p_vs").value;
+  $("dVal").textContent = $("p_max_depth").value === "21" ? "không giới hạn" : $("p_max_depth").value;
+  $("lVal").textContent = $("p_min_samples_leaf").value;
+}
+function showParams() { document.querySelectorAll(".params").forEach(el => el.style.display = el.dataset.m === model ? "" : "none"); }
+function readParams() {
+  if (model === "knn") return { n_neighbors: +$("p_n_neighbors").value, weights: $("p_weights").value, p: +$("p_p").value };
+  if (model === "nb") return { var_smoothing: Math.pow(10, +$("p_vs").value) };
+  return { max_depth: $("p_max_depth").value === "21" ? null : +$("p_max_depth").value, min_samples_leaf: +$("p_min_samples_leaf").value,
+           criterion: $("p_criterion").value, class_weight: $("p_class_weight").value || null };
+}
+function setParams(p) {
+  if (model === "knn") { $("p_n_neighbors").value = p.n_neighbors; $("p_weights").value = p.weights; $("p_p").value = p.p; }
+  else if (model === "nb") $("p_vs").value = Math.round(Math.log10(p.var_smoothing));
+  else { $("p_max_depth").value = p.max_depth ?? 21; $("p_min_samples_leaf").value = p.min_samples_leaf;
+         $("p_criterion").value = p.criterion; $("p_class_weight").value = p.class_weight || ""; }
+  syncLabels();
+}
+
+function metric(label, value, sub, cls = "") {
+  return `<div class="card flat" style="padding:14px"><div class="stat-label">${label}</div><div class="stat-value tnum ${cls}">${value}</div><div class="small muted">${sub || ""}</div></div>`;
+}
+function renderResult(r) {
+  const t = r.test, gap = r.train.f1_macro - t.f1_macro;
+  const gapBadge = gap > 0.15 ? '<span class="badge high">Overfit mạnh</span>' : gap > 0.07 ? '<span class="badge medium">Overfit nhẹ</span>' : '<span class="badge low">Tổng quát tốt</span>';
+  const diff = t.f1_macro - r.deployed.f1_macro;
+  $("result").innerHTML = `<div class="fade-in">
+    <div class="card-head"><div><h2>${MODEL_SHORT[r.model]} · Luồng ${r.flow} · ${SCEN_VI[r.scenario]}</h2>
+      <div class="card-sub">${esc(paramStr(r.params))}</div></div>${gapBadge}</div>
+    <div class="grid" style="gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+      ${metric("Test Macro-F1", fmt.num(t.f1_macro), `${diff >= 0 ? "▲" : "▼"} ${fmt.num(Math.abs(diff))} so với mô hình triển khai`, diff >= 0 ? "best" : "")}
+      ${metric("Accuracy", fmt.pct(t.accuracy), "trên tập test")}
+      ${metric("ROC-AUC (OvR)", fmt.num(t.roc_auc_ovr), "trung bình 3 lớp")}
+      ${metric("Train Macro-F1", fmt.num(r.train.f1_macro), `chênh lệch train−test: ${fmt.num(gap)}`)}
+    </div>
+    <div class="row small muted mt" style="gap:16px">
+      <span><i class="bi bi-stopwatch"></i> Huấn luyện ${(r.fit_seconds * 1000).toFixed(0)} ms · dự đoán ${(r.predict_seconds * 1000).toFixed(0)} ms</span>
+      <span><i class="bi bi-columns-gap"></i> ${r.n_features_out} cột sau tiền xử lý</span>
+      ${r.tree ? `<span><i class="bi bi-diagram-2"></i> Cây sâu ${r.tree.depth}, ${r.tree.leaves} lá</span>` : ""}
+      ${r.cv ? `<span><i class="bi bi-arrow-repeat"></i> CV 5-fold: <b>${fmt.num(r.cv.mean)} ± ${fmt.num(r.cv.std)}</b> (${r.cv.folds.map(v => v.toFixed(3)).join(" · ")})</span>` : ""}
+    </div>
+    <div class="grid mt" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
+      <div><h3>Ma trận nhầm lẫn (test)</h3>${confusionHTML(t.confusion_matrix)}</div>
+      <div><h3>Chỉ số từng lớp</h3><div class="table-wrap"><table><thead><tr><th>Lớp</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th></tr></thead><tbody>
+        ${CLS.map(c => { const p = t.per_class[c]; return `<tr><td><span class="badge ${c}">${CLS_VI[c]}</span></td><td class="num">${fmt.num(p.precision)}</td><td class="num">${fmt.num(p.recall)}</td><td class="num">${fmt.num(p.f1)}</td></tr>`; }).join("")}
+      </tbody></table></div>
+      <p class="small muted mt">Lưu ý: chọn cấu hình dựa trên tập test là "nhìn trộm" dữ liệu kiểm thử. Trang này dùng để khám phá; mô hình triển khai được chọn theo CV trên tập train.</p></div>
+    </div></div>`;
+}
+function renderHistory() {
+  $("historyCard").style.display = history.length ? "" : "none";
+  if (!history.length) return;
+  const labels = history.map((h, i) => `#${i + 1} ${MODEL_SHORT[h.model]}-${h.flow}`);
+  makeChart("histChart", {
+    type: "bar",
+    data: { labels, datasets: [
+      { label: "Train Macro-F1", data: history.map(h => h.train), backgroundColor: css("--border"), borderRadius: 4 },
+      { label: "Test Macro-F1", data: history.map(h => h.test), backgroundColor: css("--primary"), borderRadius: 4 }] },
+    options: { scales: { y: { min: 0, max: 1 }, x: { grid: { display: false } } } }
+  });
+  const best = Math.max(...history.map(h => h.test));
+  $("histTable").innerHTML = `<thead><tr><th>#</th><th>Kịch bản</th><th>Mô hình</th><th>Luồng</th><th>Tham số</th><th class="num">Train F1</th><th class="num">Test F1</th>
+    <th class="num">Accuracy</th><th class="num">Recall Bỏ học</th><th class="num">Recall Còn học</th><th class="num">CV F1</th></tr></thead><tbody>` +
+    history.map((h, i) => `<tr><td class="muted">${i + 1}</td><td>${SCEN_VI[h.scenario]}</td><td><b>${MODEL_SHORT[h.model]}</b></td><td>${h.flow}</td>
+      <td class="small muted" style="white-space:normal;min-width:200px">${esc(h.params)}</td><td class="num">${fmt.num(h.train)}</td>
+      <td class="num ${h.test === best ? "best" : ""}">${fmt.num(h.test)}</td><td class="num">${fmt.num(h.acc)}</td>
+      <td class="num">${fmt.num(h.recD)}</td><td class="num">${fmt.num(h.recE)}</td><td class="num">${h.cv == null ? "—" : fmt.num(h.cv)}</td></tr>`).join("") + "</tbody>";
+}
+
+async function run() {
+  const btn = $("btnRun");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang huấn luyện…';
+  try {
+    const r = await api("/api/playground", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scenario: scen, flow, model, params: readParams(), cv: $("useCv").checked }) });
+    renderResult(r);
+    history.push({ scenario: r.scenario, model: r.model, flow: r.flow, params: paramStr(r.params), train: r.train.f1_macro,
+                   test: r.test.f1_macro, acc: r.test.accuracy, recD: r.test.per_class.Dropout.recall,
+                   recE: r.test.per_class.Enrolled.recall, cv: r.cv ? r.cv.mean : null });
+    try { sessionStorage.setItem("pg_history", JSON.stringify(history)); } catch (e) {}
+    renderHistory();
+  } catch (e) { toast(e.message, 4000); }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-cpu"></i>Huấn luyện & đánh giá'; }
+}
+
+async function runSaved() {
+  const btn = $("btnSaved");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang kiểm thử…';
+  try {
+    const rows = await api("/api/test-saved");
+    const allOk = rows.every(r => r.match);
+    $("savedOut").innerHTML = `<div class="callout ${allOk ? "ok" : "danger"} mb"><b>${allOk ? "Đạt" : "Không khớp"}:</b>
+      ${allOk ? "Cả 3 mô hình nạp lại cho kết quả trùng khớp với lúc huấn luyện." : "Có mô hình cho kết quả khác lúc huấn luyện, hãy chạy lại python -m src.train."}</div>
+      <div class="table-wrap"><table><thead><tr><th>Kịch bản</th><th>Mô hình</th><th class="num">Accuracy</th><th class="num">Macro-F1</th><th class="num">ROC-AUC</th>
+      <th class="num">Recall Bỏ học</th><th class="num">Thời gian</th><th>Đối chiếu</th></tr></thead><tbody>` +
+      rows.map(r => `<tr><td>${r.scenario_name}</td><td><b>${MODEL_SHORT[r.model]}</b> · ${r.flow}</td><td class="num">${fmt.pct(r.accuracy)}</td>
+        <td class="num"><b>${fmt.num(r.f1_macro)}</b></td><td class="num">${fmt.num(r.roc_auc_ovr)}</td><td class="num">${fmt.num(r.recall_dropout)}</td>
+        <td class="num">${(r.seconds * 1000).toFixed(0)} ms</td>
+        <td>${r.match ? '<span class="badge low"><i class="bi bi-check-lg"></i>Khớp</span>' : `<span class="badge high">Khác (${fmt.num(r.expected_f1)})</span>`}</td></tr>`).join("") +
+      "</tbody></table></div>";
+  } catch (e) { toast(e.message, 4000); }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-play-circle"></i>Chạy kiểm thử'; }
+}
+
+function bindSeg(id, cb) {
+  document.querySelectorAll(`#${id} button`).forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll(`#${id} button`).forEach(x => x.classList.toggle("active", x === b)); cb(b.dataset.v);
+  }));
+}
+document.addEventListener("DOMContentLoaded", async () => {
+  bindSeg("segScen", v => scen = v);
+  bindSeg("segFlow", v => flow = v);
+  bindSeg("segModel", v => { model = v; showParams(); });
+  document.querySelectorAll("input[type=range]").forEach(el => el.addEventListener("input", syncLabels));
+  $("preDefault").addEventListener("click", () => setParams(DEFAULTS[model]));
+  $("preBest").addEventListener("click", async () => {
+    EXP = EXP || await api("/api/experiments");
+    const r = EXP.rows.find(x => x.scenario === scen && x.flow === flow && x.model === model && x.config === "tuned");
+    setParams({ ...DEFAULTS[model], ...r.params });
+    toast(`Đã nạp tham số tốt nhất theo CV: ${paramStr(r.params)}`);
+  });
+  $("btnRun").addEventListener("click", run);
+  $("btnSaved").addEventListener("click", runSaved);
+  $("btnClear").addEventListener("click", () => { history = []; try { sessionStorage.removeItem("pg_history"); } catch (e) {} renderHistory(); });
+  showParams(); syncLabels(); renderHistory();
+});
+</script>
+{% endblock %}

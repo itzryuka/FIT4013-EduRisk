@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Trang chủ{% endblock %}
+{% block content %}
+<section class="hero mb">
+  <div class="eyebrow">Trường Đại học Đại Nam · Khoa Công nghệ Thông tin</div>
+  <h1>Hệ thống cảnh báo sớm sinh viên có nguy cơ bỏ học</h1>
+  <p>Dự đoán một sinh viên sẽ <b>Bỏ học</b>, <b>Còn đang học</b> hay <b>Tốt nghiệp</b> từ hồ sơ tuyển sinh, tài chính và kết quả học tập,
+     để cố vấn học tập can thiệp kịp thời.</p>
+  <div class="hero-deco"><i class="bi bi-mortarboard"></i></div>
+</section>
+
+<div class="grid g-3 mb">
+  <a class="card action-card accent" href="{{ url_for('predict_page') }}">
+    <div class="stat-icon"><i class="bi bi-person-check"></i></div>
+    <h3>Dự đoán một sinh viên</h3>
+    <p>Nhập thông tin của một sinh viên, xem mức nguy cơ, xác suất từng khả năng và lý do mô hình đưa ra kết quả.</p>
+    <span class="go">Bắt đầu dự đoán <i class="bi bi-arrow-right"></i></span>
+  </a>
+  <a class="card action-card" href="{{ url_for('batch_page') }}">
+    <div class="stat-icon"><i class="bi bi-people"></i></div>
+    <h3>Dự đoán theo danh sách</h3>
+    <p>Tải lên tệp CSV danh sách sinh viên, nhận về danh sách xếp theo mức nguy cơ để ưu tiên hỗ trợ.</p>
+    <span class="go">Tải danh sách <i class="bi bi-arrow-right"></i></span>
+  </a>
+  <a class="card action-card" href="{{ url_for('experiments') }}">
+    <div class="stat-icon"><i class="bi bi-trophy"></i></div>
+    <h3>Kết quả mô hình</h3>
+    <p>So sánh K-NN, Naive Bayes và Decision Tree; xem mô hình nào được chọn và vì sao.</p>
+    <span class="go">Xem kết quả <i class="bi bi-arrow-right"></i></span>
+  </a>
+</div>
+
+<div class="grid g-4 mb">
+  <div class="card stat"><div class="stat-icon"><i class="bi bi-people"></i></div>
+    <div><div class="stat-value tnum">{{ "{:,}".format(eda.n_rows).replace(",", ".") }}</div><div class="stat-label">Sinh viên trong dữ liệu</div></div></div>
+  <div class="card stat"><div class="stat-icon"><i class="bi bi-ui-checks-grid"></i></div>
+    <div><div class="stat-value">{{ eda.n_cols }}</div><div class="stat-label">Thông tin đầu vào mỗi sinh viên</div></div></div>
+  <div class="card stat"><div class="stat-icon" style="background:var(--dropout-soft);color:var(--dropout)"><i class="bi bi-person-x"></i></div>
+    <div><div class="stat-value">{{ "%.1f"|format(eda.class_counts.Dropout / eda.n_rows * 100) }}%</div><div class="stat-label">Tỉ lệ bỏ học thực tế</div></div></div>
+  <div class="card stat"><div class="stat-icon" style="background:var(--graduate-soft);color:var(--graduate)"><i class="bi bi-bullseye"></i></div>
+    <div><div class="stat-value">{{ "%.1f"|format(scenarios[-1].acc * 100) }}%</div><div class="stat-label">Độ chính xác tốt nhất</div></div></div>
+</div>
+
+<div class="grid g-wide">
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2>Cách sử dụng</h2></div>
+      <div class="steps">
+        <div><span class="n">1</span><div><b>Chọn thời điểm</b><span>Lúc nhập học, sau học kỳ 1 hoặc sau năm thứ nhất.</span></div></div>
+        <div><span class="n">2</span><div><b>Nhập thông tin</b><span>Điền tay hoặc lấy một sinh viên mẫu có sẵn.</span></div></div>
+        <div><span class="n">3</span><div><b>Xem kết quả</b><span>Mức nguy cơ, xác suất và khuyến nghị hành động.</span></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div><h2>Dự đoán càng muộn càng chính xác</h2>
+        <div class="card-sub">Càng có nhiều kết quả học tập, mô hình càng dự đoán đúng hơn (chỉ số Macro-F1 trên tập kiểm tra).</div></div></div>
+      {% for s in scenarios %}
+      <div class="prob-row" style="grid-template-columns:150px 1fr 60px">
+        <span><b>{{ s.name }}</b><br><span class="small muted">{{ s.model_name }}</span></span>
+        <div class="bar"><span style="width:{{ s.f1 * 100 }}%"></span></div>
+        <b class="tnum" style="text-align:right">{{ "%.3f"|format(s.f1) }}</b>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div><h2>Kết quả thực tế của sinh viên</h2><div class="card-sub">Trong {{ "{:,}".format(eda.n_rows).replace(",", ".") }} sinh viên của bộ dữ liệu</div></div></div>
+    <div class="chart sm" style="height:260px"><canvas id="classChart"></canvas></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const counts = {{ eda.class_counts | tojson }};
+  makeChart("classChart", {
+    type: "doughnut",
+    data: { labels: CLS.map(c => CLS_VI[c]), datasets: [{ data: CLS.map(c => counts[c]),
+      backgroundColor: CLS.map(clsColor), borderColor: css("--surface"), borderWidth: 3 }] },
+    options: { cutout: "62%", plugins: { legend: { position: "bottom" },
+      tooltip: { callbacks: { label: (c) => ` ${c.label}: ${c.raw} (${fmt.pct(c.raw / {{ eda.n_rows }})})` } } } }
+  });
+});
+</script>
+{% endblock %}

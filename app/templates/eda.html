@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Dữ liệu{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Dữ liệu</h1>
+    <p>Bộ dữ liệu "Predict Students' Dropout and Academic Success" (UCI #697): {{ eda.n_rows }} sinh viên, {{ eda.n_cols }} đặc trưng, nhãn 3 lớp.</p></div>
+</div>
+
+<div class="grid g-4 mb">
+  <div class="card stat"><div class="stat-icon" style="background:var(--graduate-soft);color:var(--graduate)"><i class="bi bi-check2-circle"></i></div>
+    <div><div class="stat-value">{{ eda.missing }}</div><div class="stat-label">Giá trị thiếu</div></div></div>
+  <div class="card stat"><div class="stat-icon" style="background:var(--graduate-soft);color:var(--graduate)"><i class="bi bi-files"></i></div>
+    <div><div class="stat-value">{{ eda.duplicates }}</div><div class="stat-label">Dòng trùng lặp</div></div></div>
+  <div class="card stat"><div class="stat-icon" style="background:var(--enrolled-soft);color:var(--enrolled)"><i class="bi bi-dash-circle"></i></div>
+    <div><div class="stat-value">{{ eda.near_constant|length }}</div><div class="stat-label">Cột gần như hằng số (≥97%)</div></div></div>
+  <div class="card stat"><div class="stat-icon"><i class="bi bi-tags"></i></div>
+    <div><div class="stat-value">{{ eda.type_counts.values()|join(" / ") }}</div><div class="stat-label">Danh nghĩa / Nhị phân / Số</div></div></div>
+</div>
+
+<div class="page-tabs">
+  <button data-tab="dist"><i class="bi bi-bar-chart"></i>Phân phối theo nhãn</button>
+  <button data-tab="corr"><i class="bi bi-arrow-left-right"></i>Tương quan</button>
+  <button data-tab="quality"><i class="bi bi-shield-exclamation"></i>Chất lượng dữ liệu</button>
+  <button data-tab="stats"><i class="bi bi-table"></i>Thống kê mô tả</button>
+</div>
+
+<section data-pane="dist">
+<div class="card">
+  <div class="card-head">
+    <div><h2>Phân phối đặc trưng theo nhãn</h2><div class="card-sub" id="featHint">Chọn một đặc trưng để xem phân phối theo từng lớp</div></div>
+    <div class="row">
+      <select id="featSelect" style="min-width:300px">
+        {% for c in columns %}<option value="{{ c.name }}" {{ 'selected' if c.name == 'Curricular units 2nd sem (approved)' }}>{{ c.label }}</option>{% endfor %}
+      </select>
+      <div class="seg" id="modeSeg"><button data-m="count" class="active">Số lượng</button><button data-m="share">Tỉ lệ trong nhóm</button></div>
+    </div>
+  </div>
+  <div class="chart lg"><canvas id="featChart"></canvas></div>
+  <div id="featStats" class="mt"></div>
+</div>
+</section>
+
+<section data-pane="corr">
+  <div class="card">
+    <div class="card-head"><div><h2>Tương quan với nhãn</h2>
+      <div class="card-sub">Pearson giữa đặc trưng và nhãn mã hóa (Bỏ học=0, Còn học=1, Tốt nghiệp=2). Chỉ mang tính tham khảo với biến danh nghĩa.</div></div></div>
+    <div class="chart lg" style="height:460px"><canvas id="corrChart"></canvas></div>
+  </div>
+</section>
+
+<section data-pane="quality">
+<div class="grid g-2 mb">
+  <div style="display:contents">
+    <div class="card">
+      <div class="card-head"><h2>Vấn đề chất lượng dữ liệu</h2></div>
+      <div class="callout warn mb"><b>Rò rỉ theo thời gian:</b> các cột học kỳ 2 tương quan mạnh nhất với nhãn nhưng chỉ có sau năm thứ nhất.
+        Vì vậy hệ thống xây dựng 3 kịch bản dự đoán (lúc nhập học, sau HK1, sau năm 1).</div>
+      <div class="callout mb"><b>Biến phân loại mã hóa bằng số:</b> 9 cột (ngành, hình thức xét tuyển, nghề nghiệp cha mẹ…) là mã,
+        không có thứ tự. Phải One-Hot, không dùng trực tiếp như biến số với K-NN.</div>
+      <div class="callout danger"><b>Điểm 0 là "missing trá hình":</b> sinh viên không đăng ký môn ở HK2 có điểm 0, nhưng vẫn có
+        {{ eda.sem2_zero_enrolled.get('Graduate', 0) }} người tốt nghiệp, {{ eda.sem2_zero_enrolled.get('Dropout', 0) }} người bỏ học, {{ eda.sem2_zero_enrolled.get('Enrolled', 0) }} người còn học.
+        Luồng B tách thành cờ riêng.</div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Cột gần như hằng số</h3></div>
+      <ul class="list">{% for d in eda.near_constant %}<li><span>{{ d.label }}</span><b class="tnum">{{ "%.1f"|format(d.share * 100) }}% một giá trị</b></li>{% endfor %}</ul>
+    </div>
+  </div>
+</div>
+
+<div class="grid g-2 mb">
+  <div class="card">
+    <div class="card-head"><div><h2>Ngoại lệ (quy tắc IQR 1.5)</h2><div class="card-sub">Số mẫu nằm ngoài [Q1 − 1.5·IQR, Q3 + 1.5·IQR]</div></div></div>
+    <div class="chart"><canvas id="outChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div><h2>Cột có nhiều giá trị 0</h2><div class="card-sub">Ảnh hưởng tới giả định phân phối chuẩn của Gaussian NB</div></div></div>
+    <ul class="list">{% for d in eda.zero_heavy %}<li><span>{{ d.label }}</span><b class="tnum">{{ "%.0f"|format(d.share * 100) }}%</b></li>{% endfor %}</ul>
+  </div>
+</div>
+</section>
+
+<section data-pane="stats">
+<div class="card">
+  <div class="card-head"><h2>Thống kê mô tả các biến số</h2></div>
+  <div class="table-wrap" style="max-height:440px">
+    <table><thead><tr><th>Đặc trưng</th><th class="num">Trung bình</th><th class="num">Độ lệch chuẩn</th><th class="num">Min</th>
+      <th class="num">Q1</th><th class="num">Trung vị</th><th class="num">Q3</th><th class="num">Max</th></tr></thead>
+      <tbody>{% for r in eda.describe %}<tr><td>{{ r.label }}</td><td class="num">{{ r['mean'] }}</td><td class="num">{{ r['std'] }}</td>
+        <td class="num">{{ r['min'] }}</td><td class="num">{{ r['25%'] }}</td><td class="num">{{ r['50%'] }}</td><td class="num">{{ r['75%'] }}</td><td class="num">{{ r['max'] }}</td></tr>{% endfor %}</tbody></table>
+  </div>
+</div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+const EDA = {{ eda | tojson }};
+let mode = "count", current = null;
+
+function renderFeature() {
+  const d = current; if (!d) return;
+  const labels = d.kind === "numeric" ? d.bins.map(v => Number.isInteger(v) ? String(v) : v.toFixed(1)) : d.categories;
+  const totals = labels.map((_, i) => CLS.reduce((s, c) => s + d.series[c][i], 0));
+  const datasets = CLS.map(c => ({
+    label: CLS_VI[c], backgroundColor: clsColor(c) + (d.kind === "numeric" ? "b3" : ""), borderRadius: 4,
+    data: d.series[c].map((v, i) => mode === "share" ? (totals[i] ? v / totals[i] : 0) : v),
+  }));
+  makeChart("featChart", {
+    type: "bar", data: { labels, datasets },
+    options: {
+      scales: { x: { stacked: true, grid: { display: false }, ticks: { maxRotation: 50, autoSkip: d.kind === "numeric" } },
+                y: { stacked: true, max: mode === "share" ? 1 : undefined,
+                     ticks: { callback: v => mode === "share" ? fmt.pct(v, 0) : v } } },
+      plugins: { tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${mode === "share" ? fmt.pct(c.raw) : c.raw}` } } }
+    }
+  });
+  document.getElementById("featHint").textContent = d.kind === "numeric"
+    ? (d.bins.every(Number.isInteger) ? "Mỗi cột ứng với một giá trị nguyên" : "Histogram 25 khoảng") + ", xếp chồng theo nhãn. Chế độ 'Tỉ lệ' cho thấy tỉ lệ bỏ học trong từng khoảng."
+    : "Tần suất từng giá trị (tối đa 12 giá trị phổ biến nhất), xếp chồng theo nhãn.";
+  const box = document.getElementById("featStats");
+  if (d.kind === "numeric") {
+    box.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Nhãn</th><th class="num">n</th><th class="num">Trung bình</th>
+      <th class="num">Độ lệch chuẩn</th><th class="num">Trung vị</th><th class="num">Min</th><th class="num">Max</th></tr></thead><tbody>` +
+      CLS.map(c => { const s = d.stats[c]; return `<tr><td><span class="badge ${c}">${CLS_VI[c]}</span></td><td class="num">${s.count}</td>
+        <td class="num">${fmt.num(s.mean, 2)}</td><td class="num">${fmt.num(s.std, 2)}</td><td class="num">${fmt.num(s["50%"], 2)}</td>
+        <td class="num">${fmt.num(s.min, 2)}</td><td class="num">${fmt.num(s.max, 2)}</td></tr>`; }).join("") + "</tbody></table></div>";
+  } else box.innerHTML = "";
+}
+
+async function loadFeature(name) {
+  current = await api("/api/eda/feature?name=" + encodeURIComponent(name));
+  renderFeature();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const sel = document.getElementById("featSelect");
+  sel.addEventListener("change", () => loadFeature(sel.value));
+  document.querySelectorAll("#modeSeg button").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll("#modeSeg button").forEach(x => x.classList.toggle("active", x === b));
+    mode = b.dataset.m; renderFeature();
+  }));
+  loadFeature(sel.value);
+
+  const top = EDA.correlations.slice(0, 15);
+  makeChart("corrChart", {
+    type: "bar",
+    data: { labels: top.map(d => d.label), datasets: [{ data: top.map(d => d.r),
+      backgroundColor: top.map(d => d.r >= 0 ? css("--graduate") : css("--dropout")), borderRadius: 4 }] },
+    options: { indexAxis: "y", plugins: { legend: { display: false } },
+      scales: { x: { min: -0.7, max: 0.7 }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } } }
+  });
+  const out = EDA.outliers.filter(d => d.n > 0);
+  makeChart("outChart", {
+    type: "bar",
+    data: { labels: out.map(d => d.label), datasets: [{ data: out.map(d => d.n), backgroundColor: css("--enrolled"), borderRadius: 4 }] },
+    options: { indexAxis: "y", plugins: { legend: { display: false },
+      tooltip: { callbacks: { label: c => ` ${c.raw} mẫu (${fmt.pct(out[c.dataIndex].share)})` } } },
+      scales: { y: { grid: { display: false }, ticks: { font: { size: 11 } } } } }
+  });
+});
+</script>
+{% endblock %}
