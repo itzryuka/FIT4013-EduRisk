@@ -229,5 +229,3 @@ cd report && pdflatex main.tex
 
 Lớp CNTT 18-09. Giảng viên hướng dẫn: ThS. Lê Thị Thùy Trang.
 
-## 10. Khai báo sử dụng AI
-Xem [AI_USAGE.md](AI_USAGE.md).
