@@ -826,6 +826,24 @@ mạnh (số học phần đạt HK1, HK2, điểm HK2, ngành học, tình tr�
 
 % =====================================================================
 \appendix
+\chapter{Khai báo sử dụng công cụ AI}
+Theo quy định của học phần, nhóm khai báo việc sử dụng công cụ AI như sau.
+
+\textbf{Công cụ:} trợ lý lập trình Claude Code (Anthropic).
+
+\textbf{Mục đích sử dụng:}
+\begin{itemize}
+  \item Gợi ý cấu trúc thư mục và khung mã nguồn ban đầu cho quy trình học máy (\code{src/}) và ứng dụng web Flask (\code{app/}).
+  \item Hỗ trợ tìm và sửa lỗi, tra cứu cách dùng các hàm của scikit-learn.
+  \item Gợi ý cách trình bày README và bố cục báo cáo LaTeX.
+\end{itemize}
+
+\textbf{Phần nhóm tự thực hiện và kiểm chứng:} lựa chọn đề tài, thiết kế thí nghiệm (ba kịch bản thời điểm, hai luồng tiền xử lý,
+tiêu chí chọn mô hình); chạy lại toàn bộ chương trình và đối chiếu mọi con số trong báo cáo với tệp \code{results/experiments.csv};
+đối chiếu nhãn tiếng Việt của các mã giá trị với bảng mã của bài báo gốc; viết phần phân tích và thảo luận.
+
+Nhóm hiểu và giải thích được toàn bộ mã nguồn, kết quả đã nộp, và chịu trách nhiệm về tính đúng đắn của nội dung.
+
 \chapter{Hướng dẫn chạy chương trình}
 Mã nguồn: \repoURL. Dữ liệu tải từ \cite{uci697}, đặt tại \code{data/data.csv}.
 \begin{lstlisting}[language=bash,numbers=none]
