@@ -19,6 +19,21 @@
 
 </div>
 
+# FIT4013 – Nhập môn Học máy
+
+> 👩‍🏫 **Giảng viên hướng dẫn: ThS. Lê Thị Thùy Trang**
+>
+> 🏫 **Lớp:** CNTT 18-09 · **Đề tài 8:** Dự đoán sinh viên có nguy cơ bỏ học
+
+### Thành viên nhóm
+| Họ tên | MSSV | GitHub | Nhiệm vụ |
+|---|---|---|---|
+| Nguyễn Đăng Quang (nhóm trưởng) | 1871020481 | [@itzryuka](https://github.com/itzryuka) | EDA, tiền xử lý dữ liệu, kỹ thuật đặc trưng |
+| Nguyễn Thị Tuyết | 1871020644 | [@tuyet-nguyen-1809](https://github.com/tuyet-nguyen-1809) | Mô hình, thí nghiệm, đánh giá, phân tích lỗi |
+| Đỗ Trung Kiên | 1871020344 | [@trggkien12](https://github.com/trggkien12) | Ứng dụng web Flask, báo cáo LaTeX |
+
+---
+
 # EduRisk – Hệ thống cảnh báo sớm sinh viên có nguy cơ bỏ học
 
 Bài tập lớn học phần **Nhập môn Học máy (FIT4013)** · Đề tài 8 · Trường Đại học Đại Nam.
@@ -219,13 +234,4 @@ cd report && pdflatex main.tex
 - Dữ liệu không có điểm danh, bài tập hay hoạt động học trực tuyến.
 - Ngưỡng nguy cơ 0,5 / 0,3 chọn theo kinh nghiệm, chưa tối ưu theo chi phí.
 - Kết quả chỉ dùng để **ưu tiên hỗ trợ** sinh viên, không dùng để phân loại hay xử lý kỷ luật.
-
-## 9. Thành viên nhóm
-| Họ tên | MSSV | GitHub | Nhiệm vụ |
-|---|---|---|---|
-| Nguyễn Đăng Quang (nhóm trưởng) | 1871020481 | [@itzryuka](https://github.com/itzryuka) | EDA, tiền xử lý dữ liệu, kỹ thuật đặc trưng |
-| Nguyễn Thị Tuyết | 1871020644 | [@tuyet-nguyen-1809](https://github.com/tuyet-nguyen-1809) | Mô hình, thí nghiệm, đánh giá, phân tích lỗi |
-| Đỗ Trung Kiên | 1871020344 | [@trggkien12](https://github.com/trggkien12) | Ứng dụng web Flask, báo cáo LaTeX |
-
-Lớp CNTT 18-09. Giảng viên hướng dẫn: ThS. Lê Thị Thùy Trang.
 
