@@ -235,3 +235,6 @@ cd report && pdflatex main.tex
 - Ngưỡng nguy cơ 0,5 / 0,3 chọn theo kinh nghiệm, chưa tối ưu theo chi phí.
 - Kết quả chỉ dùng để **ưu tiên hỗ trợ** sinh viên, không dùng để phân loại hay xử lý kỷ luật.
 
+
+## 9. Khai báo sử dụng AI
+Xem [AI_USAGE.md](AI_USAGE.md) và Phụ lục A của báo cáo.
