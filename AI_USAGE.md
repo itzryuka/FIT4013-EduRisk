@@ -33,9 +33,8 @@ Theo quy định của học phần **Nhập môn Học máy (FIT4013)**, nhóm 
 4. "Hệ thống web các chức năng chính trông gọn gàng dễ hiểu hơn, gam màu nền sáng, thanh công cụ bên cạnh màu phù hợp như một doanh nghiệp, dùng logo trường Đại Nam."
 5. "Làm bản Word giải thích kĩ quy trình hoạt động, tại sao lại như vậy."
 6. "Tìm và tham khảo các dự án khác trên mạng, tóm tắt cách họ làm và so sánh."
-7. "Kiếm vài file dữ liệu mẫu để thử dự đoán theo danh sách; tổng hợp ngắn gọn để chuẩn bị vấn đáp."
+7. "Kiếm vài file dữ liệu mẫu để thử dự đoán theo danh sách."
 8. "Viết README giới thiệu và hướng dẫn cài, chạy dự án; rồi làm báo cáo LaTeX."
-9. "Trong báo cáo có cần thêm ảnh của dự án không? – Chụp và chèn luôn."
 
 ## 5. Cam kết
 Nhóm hiểu và giải thích được toàn bộ mã nguồn, kết quả đã nộp, và chịu trách nhiệm về tính đúng đắn của nội dung. Mọi kết quả trong báo cáo được tạo ra bằng cách chạy chương trình trên máy của nhóm, không lấy từ AI.
