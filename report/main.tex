@@ -1,115 +1,116 @@
-% =====================================================================
-%  Báo cáo bài tập lớn – Nhập môn Học máy (FIT4013)
-%  Đề tài 8: Dự đoán sinh viên có nguy cơ bỏ học
-%  Biên dịch: pdfLaTeX (Overleaf mặc định) – chạy 2 lần để có mục lục.
-% =====================================================================
 \documentclass[12pt,a4paper,oneside]{report}
 
-% ---------- Ngôn ngữ và phông chữ ----------
-\usepackage[utf8]{inputenc}
-\usepackage[T5]{fontenc}
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\setmonofont{Consolas}[Scale=MatchLowercase]
+\usepackage{unicode-math}
+\setmathfont{texgyretermes-math.otf}
 \usepackage[vietnamese]{babel}
-\usepackage{lmodern}
-\usepackage{icomma}               % dấu phẩy thập phân trong chế độ toán
-% Tiếng Việt không ngắt từ giữa âm tiết: tắt gạch nối, cho phép giãn khoảng trắng
 \AtBeginDocument{\hyphenpenalty=10000 \exhyphenpenalty=10000}
 \setlength{\emergencystretch}{3em}
 
-% ---------- Trình bày trang ----------
-\usepackage[left=3cm,right=2cm,top=2.5cm,bottom=2.5cm]{geometry}
-\usepackage{setspace}\setstretch{1.25}
+\makeatletter
+\renewcommand\normalsize{\@setfontsize\normalsize{13pt}{15.6pt}\abovedisplayskip 10pt plus 2pt minus 5pt \belowdisplayskip\abovedisplayskip \abovedisplayshortskip\z@ plus 3pt \belowdisplayshortskip 6pt plus 3pt minus 3pt}
+\makeatother
+\normalsize
+\newcommand{\headingsize}{\fontsize{14pt}{17pt}\selectfont}
+
+\usepackage[a4paper,left=3cm,right=2cm,top=2cm,bottom=2cm,headheight=16pt,headsep=0.5cm,footskip=0.9cm]{geometry}
+\usepackage{setspace}\setstretch{1.2}
 \usepackage{indentfirst}
-\setlength{\parskip}{4pt}
+\setlength{\parindent}{1cm}
+\setlength{\parskip}{3pt}
+
 \usepackage{titlesec}
-\titleformat{\chapter}[display]{\bfseries\Large\centering}{\MakeUppercase{\chaptertitlename}\ \thechapter}{6pt}{\LARGE\MakeUppercase}
-\titlespacing*{\chapter}{0pt}{-10pt}{18pt}
-\titleformat{\section}{\bfseries\large}{\thesection}{0.6em}{}
-\titleformat{\subsection}{\bfseries\normalsize}{\thesubsection}{0.6em}{}
+\titleformat{\chapter}[display]{\headingsize\bfseries\centering}{\MakeUppercase{\chaptertitlename}\ \thechapter}{4pt}{\MakeUppercase}
+\titleformat{name=\chapter,numberless}[block]{\headingsize\bfseries\centering}{}{0pt}{\MakeUppercase}
+\titlespacing*{\chapter}{0pt}{0pt}{18pt}
+\titleformat{\section}{\headingsize\bfseries}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\headingsize\bfseries}{\thesubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{12pt}{6pt}
+\titlespacing*{\subsection}{0pt}{10pt}{4pt}
+
 \usepackage{fancyhdr}
 \pagestyle{fancy}\fancyhf{}
 \fancyhead[L]{\small Nhập môn Học máy -- Đề tài 8}
 \fancyhead[R]{\small EduRisk}
 \fancyfoot[C]{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
-\setlength{\headheight}{15pt}
 \fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\thepage}\renewcommand{\headrulewidth}{0pt}}
 
-% ---------- Bảng, hình, mã ----------
-\usepackage{amsmath,amssymb}
 \usepackage{graphicx}\graphicspath{{figures/}}
-\usepackage{booktabs,tabularx,multirow,array,longtable}
-\usepackage{xcolor,colortbl}
-\usepackage{caption}\captionsetup{font=small,labelfont=bf}
+\usepackage{booktabs,tabularx,xltabular}
+\renewcommand{\tabularxcolumn}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\usepackage[table]{xcolor}
+\usepackage{caption}\captionsetup{labelfont=bf}
 \usepackage{float}
 \usepackage{enumitem}\setlist{itemsep=2pt,topsep=4pt}
 \usepackage{listings}
-\usepackage{tikz}\usetikzlibrary{positioning,arrows.meta,shapes.geometric,calc,fit}
-\usepackage[unicode,hidelinks]{hyperref}
+\usepackage{tikz}\usetikzlibrary{positioning,arrows.meta,fit}
+\usepackage[hidelinks]{hyperref}
 
 \definecolor{navy}{HTML}{0B2A5B}
 \definecolor{accent}{HTML}{F26F21}
 \definecolor{codebg}{HTML}{F5F7FB}
 \definecolor{best}{HTML}{E6F0FF}
 
-\lstdefinestyle{py}{language=Python,basicstyle=\ttfamily\footnotesize,backgroundcolor=\color{codebg},
+\newcommand{\lstcodefont}{\ttfamily\normalsize\hyphenpenalty=0\relax\exhyphenpenalty=0\relax}
+\lstdefinestyle{py}{language=Python,basicstyle=\lstcodefont,backgroundcolor=\color{codebg},
   keywordstyle=\color{navy}\bfseries,commentstyle=\color{gray}\itshape,stringstyle=\color{accent!80!black},
-  frame=single,rulecolor=\color{gray!40},breaklines=true,columns=fullflexible,showstringspaces=false,
-  numbers=left,numberstyle=\tiny\color{gray},xleftmargin=1.5em,framexleftmargin=1.5em}
+  frame=single,rulecolor=\color{gray!40},breaklines=true,columns=flexible,breakatwhitespace=false,showstringspaces=false,
+  numbers=left,numberstyle=\footnotesize\color{gray},xleftmargin=1.8em,framexleftmargin=1.8em}
 \lstset{style=py}
 
-\addto\captionsvietnamese{%
-  \renewcommand{\contentsname}{Mục lục}
-  \renewcommand{\listfigurename}{Danh mục hình}
-  \renewcommand{\listtablename}{Danh mục bảng}
-  \renewcommand{\bibname}{Tài liệu tham khảo}
-  \renewcommand{\figurename}{Hình}
-  \renewcommand{\tablename}{Bảng}
-  \renewcommand{\chaptername}{Chương}
-  \renewcommand{\appendixname}{Phụ lục}
-  \renewcommand{\lstlistingname}{Đoạn mã}}
+\addto\captionsvietnamese{\renewcommand{\contentsname}{Mục lục}}
+\addto\captionsvietnamese{\renewcommand{\listfigurename}{Danh mục hình}}
+\addto\captionsvietnamese{\renewcommand{\listtablename}{Danh mục bảng}}
+\addto\captionsvietnamese{\renewcommand{\bibname}{Tài liệu tham khảo}}
+\addto\captionsvietnamese{\renewcommand{\figurename}{Hình}}
+\addto\captionsvietnamese{\renewcommand{\tablename}{Bảng}}
+\addto\captionsvietnamese{\renewcommand{\chaptername}{Chương}}
+\addto\captionsvietnamese{\renewcommand{\appendixname}{Phụ lục}}
+\addto\captionsvietnamese{\renewcommand{\lstlistingname}{Đoạn mã}}
 
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\fone}{Macro-F1}
-
-% ---------- Thông tin nhóm: SỬA TẠI ĐÂY ----------
-\newcommand{\memberA}{Nguyễn Đăng Quang & 1871020481 & Nhóm trưởng; EDA, tiền xử lý}
-\newcommand{\memberB}{Nguyễn Thị Tuyết & 1871020644 & Mô hình, thí nghiệm, đánh giá}
-\newcommand{\memberC}{Đỗ Trung Kiên & 1871020344 & Ứng dụng web, báo cáo}
-\newcommand{\className}{(CNTT 18-09)}
+\newcommand{\hd}[1]{\begin{tabular}[b]{@{}c@{}}#1\end{tabular}}
 \newcommand{\repoURL}{\url{https://github.com/itzryuka/FIT4013-EduRisk}}
 
 \begin{document}
 
-% =====================================================================
-%  TRANG BÌA
-% =====================================================================
 \pagenumbering{alph}
 \begin{titlepage}
 \begin{center}
-\setstretch{1.15}
-{\large\bfseries BỘ GIÁO DỤC VÀ ĐÀO TẠO}\\[2pt]
-{\large\bfseries TRƯỜNG ĐẠI HỌC ĐẠI NAM}\\[2pt]
-{\large\bfseries KHOA CÔNG NGHỆ THÔNG TIN}\\[4pt]
-\rule{0.45\textwidth}{0.8pt}\\[1.2cm]
-\IfFileExists{figures/logo.png}{\includegraphics[height=3.6cm]{logo.png}}{\vspace{3.6cm}}\\[1.2cm]
-{\Large\bfseries BÁO CÁO BÀI TẬP LỚN}\\[6pt]
-{\large HỌC PHẦN: NHẬP MÔN HỌC MÁY (FIT4013)}\\[1.2cm]
-{\color{navy}\LARGE\bfseries ĐỀ TÀI 8: DỰ ĐOÁN SINH VIÊN\\[4pt] CÓ NGUY CƠ BỎ HỌC}\\[6pt]
-{\large Hệ thống cảnh báo sớm EduRisk}\\[1.4cm]
-\begin{tabular}{rl}
-Giảng viên hướng dẫn: & ThS. Lê Thị Thùy Trang\\
-Lớp: & \className
-\end{tabular}\\[0.6cm]
-{\bfseries Nhóm sinh viên thực hiện}\\[4pt]
-\begin{tabular}{llp{6cm}}
-\toprule
-\textbf{Họ và tên} & \textbf{MSSV} & \textbf{Nhiệm vụ chính}\\
-\midrule
-\memberA\\ \memberB\\ \memberC\\
-\bottomrule
-\end{tabular}
+\setstretch{1.2}
+{\fontsize{14pt}{18pt}\selectfont\bfseries BỘ GIÁO DỤC VÀ ĐÀO TẠO\\
+TRƯỜNG ĐẠI HỌC ĐẠI NAM\\
+KHOA CÔNG NGHỆ THÔNG TIN\par}
+\vspace{1.2cm}
+\includegraphics[height=4cm]{logo.png}\par
+\vspace{1.2cm}
+{\fontsize{24pt}{30pt}\selectfont\bfseries BÁO CÁO BÀI TẬP LỚN\par}
+\vspace{0.6cm}
+{\fontsize{16pt}{20pt}\selectfont\bfseries HỌC PHẦN: NHẬP MÔN HỌC MÁY\par}
+\vspace{1cm}
+{\fontsize{16pt}{20pt}\selectfont\bfseries TÊN ĐỀ TÀI:\par}
+\vspace{0.3cm}
+{\fontsize{20pt}{26pt}\selectfont\bfseries DỰ ĐOÁN SINH VIÊN CÓ NGUY CƠ BỎ HỌC\par}
+\vspace{1.4cm}
+\begin{minipage}{0.78\textwidth}
+\fontsize{14pt}{20pt}\selectfont
+\textbf{Giảng viên hướng dẫn: ThS. Lê Thị Thùy Trang}\par
+\vspace{0.3cm}
+\textbf{Sinh viên thực hiện:} Nhóm 6 -- Đề tài 8\par
+\vspace{0.15cm}
+\begin{enumerate}[leftmargin=2.2cm,itemsep=0pt,topsep=0pt]
+  \item Nguyễn Đăng Quang -- 1871020481
+  \item Nguyễn Thị Tuyết -- 1871020644
+  \item Đỗ Trung Kiên -- 1871020344
+\end{enumerate}
+\end{minipage}
 \vfill
-{\large Hà Nội, tháng 11 năm 2026}
+{\fontsize{14pt}{18pt}\selectfont Hà Nội, tháng 11 năm 2026\par}
 \end{center}
 \end{titlepage}
 
@@ -138,9 +139,7 @@ Naive Bayes tăng 0,04--0,07 điểm \fone{}. Lớp \emph{Còn đang học} là 
 \clearpage
 \pagenumbering{arabic}
 
-% =====================================================================
 \chapter{Đặt vấn đề và phân tích yêu cầu}
-% =====================================================================
 \section{Bối cảnh}
 Bỏ học là vấn đề gây tổn thất cho cả sinh viên, gia đình và nhà trường: sinh viên mất thời gian và chi phí,
 nhà trường mất nguồn lực đào tạo và bị ảnh hưởng tới các chỉ số kiểm định. Phần lớn trường hợp bỏ học có dấu hiệu từ sớm
@@ -179,9 +178,9 @@ theo giấy phép CC BY 4.0. Dữ liệu thu thập tại Học viện Bách kho
 
 Bảng~\ref{tab:groups} chia 36 đặc trưng thành các nhóm theo ý nghĩa và theo thời điểm có thông tin.
 \begin{table}[H]
-\centering\small
+\centering
 \caption{Các nhóm đặc trưng trong bộ dữ liệu}\label{tab:groups}
-\begin{tabularx}{\textwidth}{@{}p{3.6cm}cX@{}}
+\begin{tabularx}{\textwidth}{@{}L{3.6cm}cX@{}}
 \toprule
 \textbf{Nhóm} & \textbf{Số cột} & \textbf{Ví dụ}\\
 \midrule
@@ -261,9 +260,7 @@ thêm các đặc trưng dạng tỉ lệ ở Luồng B.
   \item Cột gần hằng số, mã hiếm, số 0 trá hình, tuổi lệch $\Rightarrow$ cơ sở cho Luồng B.
 \end{enumerate}
 
-% =====================================================================
 \chapter{Thiết kế giải pháp và quy trình học máy}\label{ch:design}
-% =====================================================================
 \section{Quy trình tổng thể}
 \begin{figure}[H]
 \centering
@@ -299,7 +296,7 @@ Nếu dùng cả 36 cột để dự đoán cho một sinh viên vừa nhập h�
 ba kịch bản (Bảng~\ref{tab:scen}) và huấn luyện mô hình riêng cho từng kịch bản.
 
 \begin{table}[H]
-\centering\small
+\centering
 \caption{Ba kịch bản dự đoán}\label{tab:scen}
 \begin{tabularx}{\textwidth}{@{}llcX@{}}
 \toprule
@@ -323,9 +320,9 @@ Nhóm xây dựng hai luồng tiền xử lý để đo xem kỹ thuật đặc 
 
 \textbf{Luồng B -- cải tiến.} Mỗi thay đổi xuất phát từ một quan sát ở phần EDA (Bảng~\ref{tab:flowb}).
 \begin{table}[H]
-\centering\small
+\centering
 \caption{Các bước bổ sung của Luồng B và lý do}\label{tab:flowb}
-\begin{tabularx}{\textwidth}{@{}p{5.2cm}X@{}}
+\begin{tabularx}{\textwidth}{@{}L{5.2cm}X@{}}
 \toprule
 \textbf{Bước} & \textbf{Lý do}\\
 \midrule
@@ -371,7 +368,7 @@ sánh giúp hiểu đặc điểm của dữ liệu chứ không chỉ chọn ra
 
 \section{Tinh chỉnh siêu tham số}
 \begin{table}[H]
-\centering\small
+\centering
 \caption{Không gian tìm kiếm của GridSearchCV}\label{tab:grid}
 \begin{tabularx}{\textwidth}{@{}lXr@{}}
 \toprule
@@ -386,13 +383,11 @@ Decision Tree & max\_depth $\in \{3;\ 4;\ 5;\ 6;\ 8;\ 10;\ \text{None}\}$; min\_
 Tiêu chí chọn là \fone{} trung bình trên 5 phần. Với mỗi kịch bản, cấu hình có CV cao nhất trong 6 cấu hình đã tinh chỉnh
 (3 thuật toán $\times$ 2 luồng) được lưu làm mô hình triển khai.
 
-% =====================================================================
 \chapter{Phân tích mã nguồn và chức năng}
-% =====================================================================
 \section{Cấu trúc chương trình}
 Mã nguồn được tổ chức thành các module Python (không dùng notebook) để có thể chạy lại toàn bộ bằng một lệnh.
 \begin{table}[H]
-\centering\small
+\centering
 \caption{Các module chính}\label{tab:modules}
 \begin{tabularx}{\textwidth}{@{}lX@{}}
 \toprule
@@ -470,9 +465,9 @@ phương pháp. Trang chủ (Hình~\ref{fig:ui-home}) dẫn tới ba chức năn
 \end{figure}
 
 \begin{table}[H]
-\centering\footnotesize
+\centering
 \caption{Các chức năng của ứng dụng web}\label{tab:pages}
-\begin{tabularx}{\textwidth}{@{}p{4.2cm}X@{}}
+\begin{tabularx}{\textwidth}{@{}L{4.2cm}X@{}}
 \toprule
 \textbf{Trang} & \textbf{Chức năng}\\
 \midrule
@@ -542,9 +537,7 @@ gồm kết luận chính, thiết lập thí nghiệm và biểu đồ so sánh
   \item Tệp \code{Run.bat} trên Windows gom các bước cài đặt, huấn luyện, chạy web, kiểm thử vào một menu.
 \end{itemize}
 
-% =====================================================================
 \chapter{Thử nghiệm và kết quả}
-% =====================================================================
 \section{Thiết lập thí nghiệm}
 \begin{itemize}
   \item \textbf{Dữ liệu:} 3.539 mẫu huấn luyện, 885 mẫu kiểm tra (Bỏ học 284, Còn đang học 159, Tốt nghiệp 442).
@@ -563,13 +556,19 @@ Hai mức baseline được dùng làm mốc:
 \end{enumerate}
 
 \section{Kết quả tổng hợp}
-\begin{table}[H]
-\centering\footnotesize
-\caption{Kết quả các mô hình đã tinh chỉnh (CV: trung bình $\pm$ độ lệch chuẩn trên 5 phần; Test: tập kiểm tra). Dòng tô màu là mô hình triển khai.}\label{tab:results}
-\setlength{\tabcolsep}{2.5pt}
-\begin{tabular}{@{}llllccc@{}}
+{\setlength{\tabcolsep}{3pt}
+\begin{xltabular}{\textwidth}{@{}l c l >{\raggedright\arraybackslash}X c c c@{}}
+\caption{Kết quả các mô hình đã tinh chỉnh (CV: trung bình $\pm$ độ lệch chuẩn trên 5 phần; Test: tập kiểm tra). Dòng tô màu là mô hình triển khai.}\label{tab:results}\\
 \toprule
-\textbf{Kịch bản} & \textbf{Luồng} & \textbf{Thuật toán} & \textbf{Tham số tốt nhất} & \textbf{CV \fone} & \textbf{Test \fone} & \textbf{Acc.}\\
+\textbf{Kịch bản} & \textbf{Luồng} & \textbf{\hd{Thuật\\toán}} & \textbf{Tham số tốt nhất} & \textbf{\hd{CV\\\fone}} & \textbf{\hd{Test\\\fone}} & \textbf{Acc.}\\
+\endfirsthead
+\toprule
+\textbf{Kịch bản} & \textbf{Luồng} & \textbf{\hd{Thuật\\toán}} & \textbf{Tham số tốt nhất} & \textbf{\hd{CV\\\fone}} & \textbf{\hd{Test\\\fone}} & \textbf{Acc.}\\
+\midrule
+\endhead
+\bottomrule
+\multicolumn{7}{@{}p{\textwidth}@{}}{\raggedright vs = var\_smoothing; d = max\_depth; leaf = min\_samples\_leaf; bal. = class\_weight balanced.}
+\endlastfoot
 \midrule
 Nhập học & -- & Dummy & most\_frequent & -- & 0,222 & 0,499\\
  & A & K-NN & $k$=5, $p$=2, uniform & 0,513 $\pm$ 0,005 & 0,505 & 0,575\\
@@ -594,10 +593,7 @@ Sau năm 1 & -- & Dummy & most\_frequent & -- & 0,222 & 0,499\\
  & B & K-NN & $k$=7, $p$=1, distance & 0,679 $\pm$ 0,018 & \textbf{0,678} & \textbf{0,756}\\
  & B & NB & vs=0,1 & 0,675 $\pm$ 0,010 & 0,665 & 0,724\\
 \rowcolor{best} & B & DT & d=6, leaf=20, gini, bal. & \textbf{0,685 $\pm$ 0,010} & 0,673 & 0,708\\
-\bottomrule
-\end{tabular}
-\\[2pt]{\footnotesize vs = var\_smoothing; d = max\_depth; leaf = min\_samples\_leaf; bal. = class\_weight balanced.}
-\end{table}
+\end{xltabular}}
 
 Mọi mô hình đều vượt xa baseline Dummy (0,222). \fone{} của mô hình triển khai tăng dần theo lượng thông tin:
 0,531 $\rightarrow$ 0,634 $\rightarrow$ 0,673. Ở kịch bản lúc nhập học, Decision Tree của hai luồng cho kết quả giống hệt
@@ -605,14 +601,14 @@ nhau; khi bằng điểm, chương trình giữ cấu hình xuất hiện trư�
 
 \section{Ảnh hưởng của tinh chỉnh siêu tham số}
 \begin{table}[H]
-\centering\small
+\centering
 \caption{\fone{} trên tập kiểm tra: tham số mặc định $\rightarrow$ đã tinh chỉnh}\label{tab:tuning}
-\setlength{\tabcolsep}{4.5pt}
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}lcccccc@{}}
 \toprule
  & \multicolumn{2}{c}{\textbf{K-NN}} & \multicolumn{2}{c}{\textbf{Naive Bayes}} & \multicolumn{2}{c}{\textbf{Decision Tree}}\\
 \cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
-\textbf{Kịch bản / Luồng} & Mặc định & Tinh chỉnh & Mặc định & Tinh chỉnh & Mặc định & Tinh chỉnh\\
+\textbf{Kịch bản / Luồng} & \hd{Mặc\\định} & \hd{Tinh\\chỉnh} & \hd{Mặc\\định} & \hd{Tinh\\chỉnh} & \hd{Mặc\\định} & \hd{Tinh\\chỉnh}\\
 \midrule
 Nhập học / A & 0,505 & 0,505 & 0,217 & 0,511 & 0,503 & 0,531\\
 Nhập học / B & 0,510 & 0,510 & 0,242 & 0,521 & 0,483 & 0,531\\
@@ -654,14 +650,14 @@ thay đổi (chênh lệch dưới 0,03 theo cả hai chiều).
 
 \section{Mô hình triển khai}
 \begin{table}[H]
-\centering\small
+\centering
 \caption{Chỉ số chi tiết của ba mô hình triển khai trên tập kiểm tra}\label{tab:deployed}
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}lccccccc@{}}
 \toprule
-\textbf{Kịch bản} & \textbf{Acc.} & \textbf{\fone} & \textbf{AUC} & \multicolumn{3}{c}{\textbf{Recall}} & \textbf{F1 Còn học}\\
+\textbf{Kịch bản} & \textbf{Acc.} & \textbf{\fone} & \textbf{AUC} & \multicolumn{3}{c}{\textbf{Recall}} & \textbf{\hd{F1\\Còn học}}\\
 \cmidrule(lr){5-7}
- & & & & Bỏ học & Còn học & Tốt nghiệp & \\
+ & & & & \hd{Bỏ\\học} & \hd{Còn\\học} & \hd{Tốt\\nghiệp} & \\
 \midrule
 Nhập học (DT-A)  & 0,558 & 0,531 & 0,727 & 0,592 & 0,472 & 0,568 & 0,357\\
 Sau HK1 (DT-B)   & 0,670 & 0,634 & 0,830 & 0,669 & 0,553 & 0,713 & 0,413\\
@@ -676,7 +672,7 @@ Sau năm 1 (DT-B) & 0,708 & 0,673 & 0,855 & 0,627 & 0,660 & 0,778 & 0,492\\
 \end{figure}
 
 \begin{table}[H]
-\centering\small
+\centering
 \caption{Ma trận nhầm lẫn của mô hình sau năm 1 (hàng: thực tế, cột: dự đoán)}\label{tab:cmfull}
 \begin{tabular}{@{}lccc|c@{}}
 \toprule
@@ -706,12 +702,10 @@ Permutation importance \cite{breiman2001} được tính trên tập kiểm tra 
 Các biến về gia đình (học vấn, nghề nghiệp của cha mẹ) và kinh tế vĩ mô có ảnh hưởng rất nhỏ. Nhóm kiểm tra thêm: thay các
 cột này bằng giá trị mặc định làm \fone{} thay đổi không quá 0,006.
 
-% =====================================================================
 \chapter{Thảo luận và so sánh}\label{ch:discuss}
-% =====================================================================
 \section{Ưu, nhược điểm của các phương án}
 \begin{table}[H]
-\centering\small
+\centering
 \caption{So sánh ba thuật toán trên bài toán này}\label{tab:proscons}
 \begin{tabularx}{\textwidth}{@{}lXX@{}}
 \toprule
@@ -787,9 +781,7 @@ mạnh (số học phần đạt HK1, HK2, điểm HK2, ngành học, tình tr�
         \emph{ưu tiên hỗ trợ}, không dùng để xét kỷ luật hay phân loại sinh viên.
 \end{itemize}
 
-% =====================================================================
 \chapter{Tổng kết và hướng phát triển}
-% =====================================================================
 \section{Kết quả đạt được}
 \begin{itemize}
   \item Phân tích bộ dữ liệu 4.424 sinh viên, xác định các vấn đề mất cân bằng lớp, cột gần hằng số, số 0 trá hình, phân phối lệch.
@@ -809,7 +801,6 @@ mạnh (số học phần đạt HK1, HK2, điểm HK2, ngành học, tình tr�
   \item \textbf{Triển khai:} kết nối với hệ thống quản lý đào tạo, cập nhật dự đoán sau mỗi học kỳ, lưu lịch sử can thiệp để đánh giá hiệu quả.
 \end{itemize}
 
-% =====================================================================
 \begin{thebibliography}{9}
 \addcontentsline{toc}{chapter}{Tài liệu tham khảo}
 \bibitem{realinho2022} V.~Realinho, J.~Machado, L.~Baptista, M.~V.~Martins.
@@ -824,7 +815,6 @@ mạnh (số học phần đạt HK1, HK2, điểm HK2, ngành học, tình tr�
 \bibitem{breiman2001} L.~Breiman. Random Forests. \emph{Machine Learning}, 45(1):5--32, 2001.
 \end{thebibliography}
 
-% =====================================================================
 \appendix
 \chapter{Khai báo sử dụng công cụ AI}
 Theo quy định của học phần, nhóm khai báo việc sử dụng công cụ AI như sau.

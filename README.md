@@ -214,10 +214,10 @@ Số in đậm là mô hình được triển khai, chọn theo CV. Sau năm 1, 
 
 ### Biên dịch báo cáo
 Bản PDF: [`report/FIT4013-EduRisk-Bao_cao_De_tai_8.pdf`](report/FIT4013-EduRisk-Bao_cao_De_tai_8.pdf). Mã nguồn LaTeX ở `report/main.tex`, hình ở `report/figures/`. Có hai cách biên dịch:
-- **Overleaf:** nén thư mục `report/` thành zip, chọn *New Project → Upload Project*, trình biên dịch pdfLaTeX.
-- **Trên máy** (đã cài MiKTeX hoặc TeX Live): chạy lệnh dưới đây 2 lần để có mục lục.
+- **Overleaf:** nén thư mục `report/` thành zip, chọn *New Project → Upload Project*, trình biên dịch XeLaTeX.
+- **Trên máy** (đã cài MiKTeX hoặc TeX Live): chạy lệnh dưới đây 2 lần để có mục lục (cần phông Times New Roman).
 ```bash
-cd report && pdflatex main.tex
+cd report && xelatex main.tex
 ```
 
 ## 7. Xử lý sự cố
